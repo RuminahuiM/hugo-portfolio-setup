@@ -1,0 +1,11 @@
+---
+- name: Create Route 53 hosted zone
+  community.aws.route53_zone:
+    zone: "{{ route53_zone_name }}"
+    comment: "{{ route53_comment }}"
+    state: present
+    private_zone: "{{ route53_private_zone }}"
+    vpc_id: "{{ route53_vpc_id if route53_private_zone else omit }}"
+    vpc_region: "{{ route53_vpc_region if route53_private_zone else omit }}"
+    tags: "{{ common_tags }}"
+  when: route53_enabled
