@@ -2,13 +2,19 @@
 - name: Provision Hugo portfolio AWS resources
   hosts: all
   gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
   environment:
-    AWS_PROFILE: "{{ aws_profile }}"
     AWS_REGION: "{{ aws_region }}"
     AWS_DEFAULT_REGION: "{{ aws_region }}"
   roles:
     - role: s3_static_site
+      when: s3_enabled
     - role: acm_certificate
+      when: acm_enabled
     - role: route53_hosted_zone
+      when: route53_enabled
     - role: cloudfront_distribution
+      when: cloudfront_enabled
     - role: iam_role
+      when: iam_enabled

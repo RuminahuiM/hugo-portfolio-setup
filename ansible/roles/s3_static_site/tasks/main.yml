@@ -1,6 +1,6 @@
 ---
 - name: Create S3 bucket for static site
-  community.aws.s3_bucket:
+  amazon.aws.s3_bucket:
     name: "{{ s3_bucket_name }}"
     state: present
     region: "{{ aws_region }}"
