@@ -5,7 +5,7 @@
     subject_alternative_names: "{{ acm_subject_alternative_names }}"
     validation_method: "{{ acm_validation_method }}"
     state: present
-    region: "{{ aws_region }}"
+    region: "{{ acm_region }}"
     tags: "{{ common_tags }}"
   when: acm_enabled
 
