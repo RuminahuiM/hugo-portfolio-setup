@@ -9,7 +9,9 @@ This repo includes an `ansible/` scaffold to provision:
 - a CloudFront distribution
 - an IAM role
 
-Edit `ansible/group_vars/all.yml` to set values and toggle `*_enabled` flags before running. The CloudFront `distribution_config` and S3 website/policy steps are placeholders to refine later.
+The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
+
+Edit `ansible/group_vars/all.yml` to set values and toggle `*_enabled` flags before running. The CloudFront `distribution_config` and S3 policy/access steps are placeholders to refine later.
 
 ## Prerequisites
 - Python 3 + pip
@@ -29,6 +31,113 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
 1) AWS Console -> IAM -> Users -> Create user.
 2) Do not enable "AWS Management Console access" (CLI only).
 3) Attach permissions for S3, ACM, Route 53, CloudFront, and IAM (or temporary `AdministratorAccess` while testing).
+    **Permissions Policy for the User:**
+```
+{
+"Version": "2012-10-17",
+"Statement": [
+    {
+    "Sid": "S3StaticSite",
+    "Effect": "Allow",
+    "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetBucketPolicy",
+        "s3:GetBucketWebsite",
+        "s3:GetBucketTagging",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketRequestPayment",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketOwnershipControls",
+        "s3:GetBucketAcl",
+        "s3:GetBucketObjectLockConfiguration",
+        "s3:GetInventoryConfiguration",
+        "s3:PutBucketWebsite",
+        "s3:PutBucketPolicy",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketTagging",
+        "s3:PutBucketAcl"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "ACM",
+    "Effect": "Allow",
+    "Action": [
+        "acm:RequestCertificate",
+        "acm:DescribeCertificate",
+        "acm:DeleteCertificate",
+        "acm:ListCertificates",
+        "acm:ListTagsForCertificate",
+        "acm:AddTagsToCertificate",
+        "acm:RemoveTagsFromCertificate"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "Route53",
+    "Effect": "Allow",
+    "Action": [
+        "route53:CreateHostedZone",
+        "route53:DeleteHostedZone",
+        "route53:GetHostedZone",
+        "route53:UpdateHostedZoneComment",
+        "route53:ListHostedZones",
+        "route53:ListResourceRecordSets",
+        "route53:ChangeResourceRecordSets",
+        "route53:GetChange",
+        "route53:GetDNSSEC",
+        "route53:EnableHostedZoneDNSSEC",
+        "route53:DisableHostedZoneDNSSEC",
+        "route53:ListTagsForResource",
+        "route53:ChangeTagsForResource"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "CloudFront",
+    "Effect": "Allow",
+    "Action": [
+        "cloudfront:CreateDistribution",
+        "cloudfront:UpdateDistribution",
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:DeleteDistribution",
+        "cloudfront:ListDistributions",
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetInvalidation",
+        "cloudfront:TagResource",
+        "cloudfront:UntagResource",
+        "cloudfront:ListTagsForResource"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "IAMRole",
+    "Effect": "Allow",
+    "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateRoleDescription",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies"
+    ],
+    "Resource": "*"
+    }
+]
+}
+```
+
 4) Open the user -> Security credentials -> Create access key (CLI).
 5) Copy the Access Key ID and Secret Access Key.
 

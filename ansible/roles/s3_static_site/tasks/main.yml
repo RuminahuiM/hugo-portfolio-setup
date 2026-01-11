@@ -4,13 +4,20 @@
     name: "{{ s3_bucket_name }}"
     state: present
     region: "{{ aws_region }}"
-    tags: "{{ common_tags }}"
+    tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
   when: s3_enabled
 
-- name: Placeholder for static website configuration
+- name: Enable S3 static website hosting
+  community.aws.s3_website:
+    name: "{{ s3_bucket_name }}"
+    state: present
+    suffix: "{{ s3_website_index }}"
+    error_key: "{{ s3_website_error }}"
+  when: s3_enabled
+
+- name: Placeholder for bucket policy and access configuration
   ansible.builtin.debug:
     msg:
-      - "TODO: enable static website hosting for {{ s3_bucket_name }}"
-      - "TODO: set index {{ s3_website_index }} and error {{ s3_website_error }}"
       - "TODO: attach bucket policy or CloudFront OAC permissions"
+      - "TODO: decide public access block settings"
   when: s3_enabled

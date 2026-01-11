@@ -7,8 +7,9 @@ common_tags:
   Project: "{{ project_name }}"
   ManagedBy: "ansible"
 
-s3_enabled: false
-s3_bucket_name: "CHANGE_ME"
+s3_enabled: true
+s3_bucket_name: "test-hugosetup-ansible01"
+s3_apply_tags: false
 s3_website_index: "index.html"
 s3_website_error: "404.html"
 s3_force_destroy: false
