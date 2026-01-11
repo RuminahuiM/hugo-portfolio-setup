@@ -1,0 +1,6 @@
+---
+- name: Create CloudFront distribution
+  community.aws.cloudfront_distribution:
+    state: present
+    distribution_config: "{{ cloudfront_distribution_config }}"
+  when: cloudfront_enabled

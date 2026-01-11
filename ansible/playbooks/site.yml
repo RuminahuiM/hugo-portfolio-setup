@@ -1,0 +1,14 @@
+---
+- name: Provision Hugo portfolio AWS resources
+  hosts: all
+  gather_facts: false
+  environment:
+    AWS_PROFILE: "{{ aws_profile }}"
+    AWS_REGION: "{{ aws_region }}"
+    AWS_DEFAULT_REGION: "{{ aws_region }}"
+  roles:
+    - role: s3_static_site
+    - role: acm_certificate
+    - role: route53_hosted_zone
+    - role: cloudfront_distribution
+    - role: iam_role

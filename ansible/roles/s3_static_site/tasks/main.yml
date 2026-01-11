@@ -1,0 +1,16 @@
+---
+- name: Create S3 bucket for static site
+  community.aws.s3_bucket:
+    name: "{{ s3_bucket_name }}"
+    state: present
+    region: "{{ aws_region }}"
+    tags: "{{ common_tags }}"
+  when: s3_enabled
+
+- name: Placeholder for static website configuration
+  ansible.builtin.debug:
+    msg:
+      - "TODO: enable static website hosting for {{ s3_bucket_name }}"
+      - "TODO: set index {{ s3_website_index }} and error {{ s3_website_error }}"
+      - "TODO: attach bucket policy or CloudFront OAC permissions"
+  when: s3_enabled

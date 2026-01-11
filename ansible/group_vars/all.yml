@@ -1,0 +1,91 @@
+---
+project_name: "hugo-portfolio"
+
+aws_region: "us-east-1"
+aws_profile: "default"
+
+common_tags:
+  Project: "{{ project_name }}"
+  ManagedBy: "ansible"
+
+s3_enabled: false
+s3_bucket_name: "CHANGE_ME"
+s3_website_index: "index.html"
+s3_website_error: "404.html"
+s3_force_destroy: false
+
+acm_enabled: false
+acm_domain_name: "example.com"
+acm_subject_alternative_names: []
+acm_validation_method: "DNS"
+
+route53_enabled: false
+route53_zone_name: "example.com"
+route53_comment: "Managed by Ansible"
+route53_private_zone: false
+route53_vpc_id: ""
+route53_vpc_region: "us-east-1"
+
+cloudfront_enabled: false
+cloudfront_caller_reference: "CHANGE_ME"
+cloudfront_comment: "Hugo portfolio distribution"
+cloudfront_default_root_object: "index.html"
+cloudfront_price_class: "PriceClass_100"
+cloudfront_aliases:
+  - "CHANGE_ME.example.com"
+cloudfront_origin_id: "s3-static-site"
+cloudfront_origin_domain_name: "CHANGE_ME"
+cloudfront_certificate_arn: "CHANGE_ME"
+
+cloudfront_distribution_config:
+  caller_reference: "{{ cloudfront_caller_reference }}"
+  enabled: true
+  comment: "{{ cloudfront_comment }}"
+  default_root_object: "{{ cloudfront_default_root_object }}"
+  price_class: "{{ cloudfront_price_class }}"
+  aliases:
+    quantity: "{{ cloudfront_aliases | length }}"
+    items: "{{ cloudfront_aliases }}"
+  origins:
+    quantity: 1
+    items:
+      - id: "{{ cloudfront_origin_id }}"
+        domain_name: "{{ cloudfront_origin_domain_name }}"
+        custom_origin_config:
+          http_port: 80
+          https_port: 443
+          origin_protocol_policy: "http-only"
+  default_cache_behavior:
+    target_origin_id: "{{ cloudfront_origin_id }}"
+    viewer_protocol_policy: "redirect-to-https"
+    allowed_methods:
+      quantity: 2
+      items: ["GET", "HEAD"]
+      cached_methods:
+        quantity: 2
+        items: ["GET", "HEAD"]
+    forwarded_values:
+      query_string: false
+      cookies:
+        forward: "none"
+  viewer_certificate:
+    acm_certificate_arn: "{{ cloudfront_certificate_arn }}"
+    ssl_support_method: "sni-only"
+    minimum_protocol_version: "TLSv1.2_2021"
+
+iam_enabled: false
+iam_role_name: "CHANGE_ME"
+iam_role_description: "Role managed by Ansible"
+iam_role_assume_policy: |
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": { "Service": "ec2.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  }
+iam_role_managed_policies: []
+iam_role_inline_policies: {}

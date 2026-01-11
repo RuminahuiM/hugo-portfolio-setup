@@ -1,0 +1,16 @@
+---
+- name: Request ACM certificate
+  community.aws.acm_certificate:
+    domain_name: "{{ acm_domain_name }}"
+    subject_alternative_names: "{{ acm_subject_alternative_names }}"
+    validation_method: "{{ acm_validation_method }}"
+    state: present
+    region: "{{ aws_region }}"
+    tags: "{{ common_tags }}"
+  when: acm_enabled
+
+- name: Placeholder for DNS validation records
+  ansible.builtin.debug:
+    msg:
+      - "TODO: create DNS validation records for {{ acm_domain_name }}"
+  when: acm_enabled
