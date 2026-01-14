@@ -26,6 +26,19 @@ pip install ansible boto3 botocore awscli
 ansible-galaxy collection install -r ansible/requirements.yml
 ```
 
+Verify prerequisites:
+```bash
+python3 --version
+pip3 --version
+ansible --version
+aws --version
+python3 - <<'PY'
+import boto3, botocore
+print("boto3", boto3.__version__, "botocore", botocore.__version__)
+PY
+ansible-galaxy collection list | grep -E 'amazon.aws|community.aws'
+```
+
 ## AWS CLI credentials (explicit setup)
 You need AWS credentials on the machine running Ansible. For this repo we use a single method: IAM user access keys.
 1) AWS Console -> IAM -> Users -> Create user.
