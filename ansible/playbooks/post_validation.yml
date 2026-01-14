@@ -1,0 +1,16 @@
+---
+- name: Finalize CloudFront after ACM validation
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
+  environment:
+    AWS_REGION: "{{ aws_region }}"
+    AWS_DEFAULT_REGION: "{{ aws_region }}"
+  roles:
+    - role: acm_certificate
+      when: acm_enabled
+    - role: cloudfront_distribution
+      when: cloudfront_enabled
+    - role: route53_records
+      when: route53_enabled
