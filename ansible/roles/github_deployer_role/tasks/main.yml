@@ -190,6 +190,7 @@
     tags: "{{ common_tags }}"
   when:
     - github_deployer_enabled
+    - github_deployer_state == "present"
 
 - name: Attach GitHub deployer inline policies
   amazon.aws.iam_policy:
@@ -236,3 +237,54 @@
     - github_deployer_state == "absent"
     - github_deployer_policy_list.stdout is defined
     - github_deployer_policy_list.rc == 0
+
+- name: List GitHub deployer managed policies for deletion
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - list-attached-role-policies
+      - --role-name
+      - "{{ github_deployer_role_name }}"
+      - --query
+      - "AttachedPolicies[].PolicyArn"
+      - --output
+      - json
+  register: github_deployer_managed_policies_list
+  changed_when: false
+  failed_when: false
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "absent"
+
+- name: Detach GitHub deployer managed policies
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - detach-role-policy
+      - --role-name
+      - "{{ github_deployer_role_name }}"
+      - --policy-arn
+      - "{{ item }}"
+  loop: "{{ (github_deployer_managed_policies_list.stdout | default('[]', true) | from_json) }}"
+  changed_when: true
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "absent"
+    - github_deployer_managed_policies_list.rc == 0
+
+- name: Delete GitHub deployer role
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - delete-role
+      - --role-name
+      - "{{ github_deployer_role_name }}"
+  register: github_deployer_delete_role
+  changed_when: github_deployer_delete_role.rc == 0
+  failed_when: false
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "absent"
