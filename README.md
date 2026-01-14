@@ -179,10 +179,23 @@ When finished, delete the access key in IAM.
 
 Make sure the credentials have permissions for S3, ACM, Route 53, CloudFront, and IAM.
 
-ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Set your default region in `ansible/group_vars/all.yml`, and keep `acm_region: "us-east-1"`.
+ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/group_vars/all.yml`, and set your normal region in `ansible/group_vars/user.yml`.
+
+## Configure User Inputs
+Edit the user configuration file before running anything:
+`ansible/group_vars/user.yml`
+
+This is where you set:
+- `domain_name`
+- `aws_region`
+- `bucket_subdomain`
+- `github_account_name`
+- `github_repo_name`
+- `github_repo_branch`
+- `github_deployer_enabled`
 
 ## GitHub Deployer Role (OIDC)
-This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/group_vars/all.yml`:
+This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/group_vars/user.yml`:
 ```yaml
 github_deployer_enabled: true
 github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
