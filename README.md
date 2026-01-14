@@ -11,7 +11,7 @@ This repo includes an `ansible/` scaffold to provision:
 
 The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
 
-Edit `ansible/group_vars/all.yml` to set values and toggle `*_enabled` flags before running. The CloudFront `distribution_config` and S3 policy/access steps are placeholders to refine later.
+Edit `ansible/group_vars/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/group_vars/all.yml` keeps defaults.
 
 ## Prerequisites
 - Python 3 + pip
@@ -24,6 +24,19 @@ Example install:
 ```bash
 pip install ansible boto3 botocore awscli
 ansible-galaxy collection install -r ansible/requirements.yml
+```
+
+Verify prerequisites:
+```bash
+python3 --version
+pip3 --version
+ansible --version
+aws --version
+python3 - <<'PY'
+import boto3, botocore
+print("boto3", boto3.__version__, "botocore", botocore.__version__)
+PY
+ansible-galaxy collection list | grep -E 'amazon.aws|community.aws'
 ```
 
 ## AWS CLI credentials (explicit setup)
