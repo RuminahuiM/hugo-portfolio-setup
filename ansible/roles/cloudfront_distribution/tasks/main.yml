@@ -53,10 +53,59 @@
     - (cloudfront_state | default('present')) == 'present'
     - cloudfront_result.id is defined
 
+- name: Lookup CloudFront distribution id for deletion
+  ansible.builtin.command:
+    argv:
+      - aws
+      - cloudfront
+      - list-distributions
+      - --query
+      - "DistributionList.Items[?Comment=='{{ cloudfront_comment }}'].Id | [0]"
+      - --output
+      - text
+  register: cloudfront_id_lookup
+  changed_when: false
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'absent'
+    - (cloudfront_distribution_id | default('')) == ''
+
+- name: Store CloudFront distribution id for deletion
+  ansible.builtin.set_fact:
+    cloudfront_distribution_id: "{{ cloudfront_id_lookup.stdout }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'absent'
+    - (cloudfront_distribution_id | default('')) == ''
+    - cloudfront_id_lookup.stdout is defined
+    - cloudfront_id_lookup.stdout != "None"
+
+- name: Disable CloudFront distribution before deletion
+  community.aws.cloudfront_distribution:
+    state: present
+    distribution_id: "{{ cloudfront_distribution_id }}"
+    enabled: false
+    comment: "{{ cloudfront_comment }}"
+    default_root_object: "{{ cloudfront_default_root_object }}"
+    price_class: "{{ cloudfront_price_class }}"
+    aliases: []
+    origins: "{{ cloudfront_origins }}"
+    default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
+    viewer_certificate:
+      cloudfront_default_certificate: true
+    wait: true
+    wait_timeout: "{{ cloudfront_wait_timeout | default(1800) }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'absent'
+    - cloudfront_distribution_id is defined
+    - cloudfront_distribution_id | length > 0
+
 - name: Ensure CloudFront distribution is absent
   community.aws.cloudfront_distribution:
     state: absent
     caller_reference: "{{ cloudfront_caller_reference }}"
+    distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
     wait: true
   when:
     - cloudfront_enabled

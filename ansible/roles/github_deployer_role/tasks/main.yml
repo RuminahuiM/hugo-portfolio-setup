@@ -72,6 +72,37 @@
     - github_oidc_provider_state == "present"
     - github_oidc_provider_check.rc != 0
 
+- name: Check GitHub OIDC provider for deletion
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - get-open-id-connect-provider
+      - --open-id-connect-provider-arn
+      - "{{ github_oidc_provider_arn }}"
+  register: github_oidc_provider_delete_check
+  changed_when: false
+  failed_when: false
+  when:
+    - github_deployer_enabled
+    - github_oidc_provider_state == "absent"
+    - github_oidc_provider_arn is defined
+
+- name: Delete GitHub OIDC provider
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - delete-open-id-connect-provider
+      - --open-id-connect-provider-arn
+      - "{{ github_oidc_provider_arn }}"
+  changed_when: true
+  when:
+    - github_deployer_enabled
+    - github_oidc_provider_state == "absent"
+    - github_oidc_provider_arn is defined
+    - github_oidc_provider_delete_check.rc == 0
+
 - name: Build GitHub repository subjects
   ansible.builtin.set_fact:
     github_repo_subjects_effective: >-
@@ -153,8 +184,55 @@
     description: "{{ github_deployer_role_description }}"
     assume_role_policy_document: "{{ github_deployer_assume_role_policy | default(omit) }}"
     managed_policies: "{{ github_deployer_managed_policies }}"
-    policies: "{{ github_deployer_inline_policies | default({}) }}"
+    create_instance_profile: false
+    delete_instance_profile: false
     state: "{{ github_deployer_state }}"
     tags: "{{ common_tags }}"
   when:
     - github_deployer_enabled
+
+- name: Attach GitHub deployer inline policies
+  amazon.aws.iam_policy:
+    iam_type: role
+    iam_name: "{{ github_deployer_role_name }}"
+    policy_name: "{{ item.key }}"
+    policy_json: "{{ item.value | to_json }}"
+    state: present
+  loop: "{{ github_deployer_inline_policies | dict2items }}"
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "present"
+    - github_deployer_inline_policies is defined
+    - github_deployer_inline_policies | length > 0
+
+- name: List GitHub deployer inline policies for deletion
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - list-role-policies
+      - --role-name
+      - "{{ github_deployer_role_name }}"
+      - --query
+      - "PolicyNames"
+      - --output
+      - json
+  register: github_deployer_policy_list
+  changed_when: false
+  failed_when: false
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "absent"
+
+- name: Remove GitHub deployer inline policies
+  amazon.aws.iam_policy:
+    iam_type: role
+    iam_name: "{{ github_deployer_role_name }}"
+    policy_name: "{{ item }}"
+    state: absent
+  loop: "{{ (github_deployer_policy_list.stdout | default('[]', true) | from_json) }}"
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "absent"
+    - github_deployer_policy_list.stdout is defined
+    - github_deployer_policy_list.rc == 0

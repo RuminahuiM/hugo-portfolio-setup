@@ -1,7 +1,7 @@
 ---
 - name: Determine Route 53 record state
   ansible.builtin.set_fact:
-    route53_records_state: "{{ route53_records_state | default(route53_state | default('present')) }}"
+    route53_records_state: "{{ route53_state | default('present') }}"
   when: route53_enabled
 
 - name: Lookup Route 53 hosted zone id
