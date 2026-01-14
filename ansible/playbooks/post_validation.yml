@@ -4,6 +4,10 @@
   gather_facts: false
   vars_files:
     - ../group_vars/all.yml
+  vars:
+    acm_state: present
+    cloudfront_state: present
+    route53_state: present
   environment:
     AWS_REGION: "{{ aws_region }}"
     AWS_DEFAULT_REGION: "{{ aws_region }}"

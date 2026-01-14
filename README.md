@@ -99,31 +99,47 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
     {
     "Sid": "CloudFront",
     "Effect": "Allow",
-        "Action": [
-            "cloudfront:CreateDistribution",
-            "cloudfront:UpdateDistribution",
-            "cloudfront:GetDistribution",
-            "cloudfront:GetDistributionConfig",
-            "cloudfront:DeleteDistribution",
-            "cloudfront:ListDistributions",
-            "cloudfront:CreateCloudFrontOriginAccessIdentity",
-            "cloudfront:GetCloudFrontOriginAccessIdentity",
-            "cloudfront:ListCloudFrontOriginAccessIdentities",
-            "cloudfront:DeleteCloudFrontOriginAccessIdentity",
-            "cloudfront:CreateInvalidation",
-            "cloudfront:GetInvalidation",
-            "cloudfront:TagResource",
-            "cloudfront:UntagResource",
-            "cloudfront:ListTagsForResource"
-        ],
+    "Action": [
+        "cloudfront:CreateDistribution",
+        "cloudfront:UpdateDistribution",
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:DeleteDistribution",
+        "cloudfront:ListDistributions",
+        "cloudfront:CreateCloudFrontOriginAccessIdentity",
+        "cloudfront:GetCloudFrontOriginAccessIdentity",
+        "cloudfront:ListCloudFrontOriginAccessIdentities",
+        "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetInvalidation",
+        "cloudfront:TagResource",
+        "cloudfront:UntagResource",
+        "cloudfront:ListTagsForResource"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "GitHubOIDCProvider",
+    "Effect": "Allow",
+    "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:DeleteOpenIDConnectProvider",
+        "iam:GetOpenIDConnectProvider"
+    ],
+    "Resource": "*"
+    },
+    {
+    "Sid": "STS",
+    "Effect": "Allow",
+    "Action": [
+        "sts:GetCallerIdentity"
+    ],
     "Resource": "*"
     },
     {
     "Sid": "IAMRole",
     "Effect": "Allow",
     "Action": [
-        "iam:CreateOpenIDConnectProvider",
-        "iam:GetOpenIDConnectProvider",
         "iam:CreateRole",
         "iam:DeleteRole",
         "iam:GetRole",
@@ -182,6 +198,33 @@ After running the playbook, fetch the role ARN for your GitHub workflow:
 ```bash
 aws iam get-role --role-name <role-name> --query Role.Arn --output text
 ```
+
+## After The First Run
+The `site.yml` playbook prints:
+- The GitHub Actions repository variables to set.
+- The Route 53 name servers for your hosted zone.
+
+Set Route 53 name servers at your registrar:
+1) Go to your domain registrar’s DNS settings.
+2) Replace the current name servers with the Route 53 name servers printed by the playbook.
+3) Wait for DNS propagation (can take minutes to hours).
+
+Set GitHub repository variables:
+1) In GitHub, open your repo → Settings → Secrets and variables → Actions → Variables.
+2) Create variables matching the names printed by the playbook:
+   - `AWS_REGION`
+   - `BUCKET_NAME`
+   - `CF_DISTRIBUTION_ID`
+   - `SITE_BASE_URL`
+3) If your workflow uses an OIDC role variable or secret, set `AWS_ROLE_ARN` from the playbook output.
+
+After ACM validation is complete, run:
+```bash
+cd ansible
+ansible-playbook playbooks/post_validation.yml
+```
+
+Once DNS has propagated, your GitHub Actions workflow will deploy to S3 on every push. You can trigger a deploy by committing any change and pushing to the configured branch.
 
 ## Run
 ```bash

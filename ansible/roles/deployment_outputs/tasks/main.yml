@@ -1,0 +1,130 @@
+---
+- name: Lookup AWS account id for outputs
+  ansible.builtin.command:
+    argv:
+      - aws
+      - sts
+      - get-caller-identity
+      - --query
+      - Account
+      - --output
+      - text
+  register: output_account_lookup
+  changed_when: false
+  when:
+    - github_deployer_enabled
+    - (aws_account_id | default('')) == ''
+
+- name: Store AWS account id for outputs
+  ansible.builtin.set_fact:
+    aws_account_id: "{{ output_account_lookup.stdout }}"
+  when:
+    - github_deployer_enabled
+    - output_account_lookup.stdout is defined
+    - output_account_lookup.stdout | length > 0
+
+- name: Store GitHub deployer role ARN
+  ansible.builtin.set_fact:
+    github_deployer_role_arn: "arn:aws:iam::{{ aws_account_id }}:role/{{ github_deployer_role_name }}"
+  when:
+    - github_deployer_enabled
+    - (github_deployer_role_arn | default('')) == ''
+    - aws_account_id is defined
+    - aws_account_id | length > 0
+
+- name: Lookup CloudFront distribution id when missing
+  ansible.builtin.command:
+    argv:
+      - aws
+      - cloudfront
+      - list-distributions
+      - --query
+      - "DistributionList.Items[?Comment=='{{ cloudfront_comment }}'].Id | [0]"
+      - --output
+      - text
+  register: cloudfront_id_lookup
+  changed_when: false
+  when:
+    - cloudfront_enabled
+    - (cloudfront_distribution_id | default('')) == ''
+
+- name: Store CloudFront distribution id
+  ansible.builtin.set_fact:
+    cloudfront_distribution_id: "{{ cloudfront_id_lookup.stdout }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_distribution_id | default('')) == ''
+    - cloudfront_id_lookup.stdout is defined
+    - cloudfront_id_lookup.stdout != "None"
+
+- name: Lookup Route 53 name servers when missing
+  ansible.builtin.command:
+    argv:
+      - aws
+      - route53
+      - get-hosted-zone
+      - --id
+      - "{{ route53_zone_id }}"
+      - --query
+      - "DelegationSet.NameServers"
+      - --output
+      - json
+  register: route53_name_servers_lookup
+  changed_when: false
+  when:
+    - route53_enabled
+    - route53_zone_id is defined
+    - (route53_name_servers | default([]) | length) == 0
+
+- name: Store Route 53 name servers for outputs
+  ansible.builtin.set_fact:
+    route53_name_servers: "{{ route53_name_servers_lookup.stdout | from_json }}"
+  when:
+    - route53_enabled
+    - route53_name_servers_lookup.stdout is defined
+    - route53_name_servers_lookup.stdout | length > 0
+
+- name: Build GitHub site base URL
+  ansible.builtin.set_fact:
+    github_site_base_url: "{{ site_base_url | default('https://' ~ github_deployer_s3_bucket_name) }}"
+  when:
+    - github_deployer_enabled
+
+- name: Build GitHub repository variables
+  ansible.builtin.set_fact:
+    github_repo_variables:
+      - "AWS_REGION={{ aws_region }}"
+      - "BUCKET_NAME={{ github_deployer_s3_bucket_name }}"
+      - "CF_DISTRIBUTION_ID={{ github_deployer_cloudfront_distribution_id | default(cloudfront_distribution_id | default('')) }}"
+      - "SITE_BASE_URL={{ github_site_base_url }}"
+  when:
+    - github_deployer_enabled
+
+- name: Output GitHub Actions repository variables
+  ansible.builtin.debug:
+    msg: "{{ ['Repository variables (GitHub Actions):'] + github_repo_variables }}"
+  when:
+    - github_deployer_enabled
+
+- name: Output GitHub OIDC role ARN
+  ansible.builtin.debug:
+    msg:
+      - "OIDC role ARN (use as a repo variable or secret if your workflow expects it):"
+      - "AWS_ROLE_ARN={{ github_deployer_role_arn }}"
+  when:
+    - github_deployer_enabled
+    - github_deployer_role_arn is defined
+
+- name: Output Route 53 name servers
+  ansible.builtin.debug:
+    msg: "{{ ['Route 53 name servers for ' ~ route53_zone_name ~ ':'] + route53_name_servers }}"
+  when:
+    - route53_enabled
+    - route53_name_servers is defined
+    - route53_name_servers | length > 0
+
+- name: Output next-step reminder
+  ansible.builtin.debug:
+    msg:
+      - "Next steps: set the GitHub variables and update your domain registrar with the Route 53 name servers."
+      - "After ACM validation completes, run: ansible-playbook playbooks/post_validation.yml"

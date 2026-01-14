@@ -4,9 +4,22 @@
   gather_facts: false
   vars_files:
     - ../group_vars/all.yml
+  vars:
+    s3_state: present
+    cloudfront_state: present
+    acm_state: present
+    route53_state: present
+    github_deployer_state: present
+    github_oidc_provider_state: present
+    iam_state: present
   environment:
     AWS_REGION: "{{ aws_region }}"
     AWS_DEFAULT_REGION: "{{ aws_region }}"
+  pre_tasks:
+    - name: Reset GitHub deployer state for this run
+      ansible.builtin.set_fact:
+        github_deployer_state: present
+        github_oidc_provider_state: present
   roles:
     - role: s3_static_site
       when: s3_enabled
@@ -22,3 +35,4 @@
       when: route53_enabled
     - role: iam_role
       when: iam_enabled
+    - role: deployment_outputs
