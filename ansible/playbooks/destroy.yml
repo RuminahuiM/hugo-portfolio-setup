@@ -10,6 +10,8 @@
     acm_state: absent
     route53_state: absent
     iam_state: absent
+    github_deployer_state: absent
+    github_oidc_provider_state: absent
     s3_force_destroy: true
   environment:
     AWS_REGION: "{{ aws_region }}"
@@ -25,5 +27,7 @@
       when: acm_enabled
     - role: route53_hosted_zone
       when: route53_enabled
+    - role: github_deployer_role
+      when: github_deployer_enabled
     - role: iam_role
       when: iam_enabled

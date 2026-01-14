@@ -16,6 +16,8 @@
       when: acm_enabled
     - role: cloudfront_distribution
       when: cloudfront_enabled
+    - role: github_deployer_role
+      when: github_deployer_enabled
     - role: route53_records
       when: route53_enabled
     - role: iam_role
