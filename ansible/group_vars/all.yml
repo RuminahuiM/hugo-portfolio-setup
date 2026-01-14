@@ -8,7 +8,7 @@ common_tags:
   ManagedBy: "ansible"
 
 s3_enabled: true
-s3_bucket_name: "test-hugosetup-ansible01"
+s3_bucket_name: "test-hugosetup-ansible02"
 s3_apply_tags: false
 s3_website_index: "index.html"
 s3_website_error: "404.html"

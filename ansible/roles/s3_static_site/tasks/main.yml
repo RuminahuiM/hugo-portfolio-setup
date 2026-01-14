@@ -7,14 +7,6 @@
     tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
   when: s3_enabled
 
-- name: Enable S3 static website hosting
-  community.aws.s3_website:
-    name: "{{ s3_bucket_name }}"
-    state: present
-    suffix: "{{ s3_website_index }}"
-    error_key: "{{ s3_website_error }}"
-  when: s3_enabled
-
 - name: Placeholder for bucket policy and access configuration
   ansible.builtin.debug:
     msg:
