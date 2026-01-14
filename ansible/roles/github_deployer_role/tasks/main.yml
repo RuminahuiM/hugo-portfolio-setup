@@ -1,0 +1,160 @@
+---
+- name: Determine GitHub deployer state
+  ansible.builtin.set_fact:
+    github_deployer_state: "{{ github_deployer_state | default('present') }}"
+    github_oidc_provider_state: "{{ github_oidc_provider_state | default('present') }}"
+    github_deployer_inline_policies: "{{ github_deployer_inline_policies | default({}) }}"
+  when: github_deployer_enabled
+
+- name: Lookup AWS account id
+  ansible.builtin.command:
+    argv:
+      - aws
+      - sts
+      - get-caller-identity
+      - --query
+      - Account
+      - --output
+      - text
+  register: aws_account_lookup
+  changed_when: false
+  when:
+    - github_deployer_enabled
+    - aws_account_id is not defined or aws_account_id | length == 0
+
+- name: Store AWS account id
+  ansible.builtin.set_fact:
+    aws_account_id: "{{ aws_account_lookup.stdout }}"
+  when:
+    - github_deployer_enabled
+    - aws_account_lookup.stdout is defined
+    - aws_account_lookup.stdout | length > 0
+
+- name: Build GitHub OIDC provider details
+  ansible.builtin.set_fact:
+    github_oidc_provider_host: "{{ github_oidc_provider_url | regex_replace('^https?://', '') }}"
+    github_oidc_provider_arn: "arn:aws:iam::{{ aws_account_id }}:oidc-provider/{{ github_oidc_provider_url | regex_replace('^https?://', '') }}"
+  when:
+    - github_deployer_enabled
+    - aws_account_id is defined
+    - aws_account_id | length > 0
+
+- name: Check GitHub OIDC provider
+  ansible.builtin.command:
+    argv:
+      - aws
+      - iam
+      - get-open-id-connect-provider
+      - --open-id-connect-provider-arn
+      - "{{ github_oidc_provider_arn }}"
+  register: github_oidc_provider_check
+  changed_when: false
+  failed_when: false
+  when:
+    - github_deployer_enabled
+    - github_oidc_provider_state == "present"
+    - github_oidc_provider_arn is defined
+
+- name: Create GitHub OIDC provider
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [
+          'aws', 'iam', 'create-open-id-connect-provider',
+          '--url', github_oidc_provider_url,
+          '--client-id-list', github_oidc_audience,
+          '--thumbprint-list'
+        ] + github_oidc_thumbprints
+      }}
+  changed_when: true
+  when:
+    - github_deployer_enabled
+    - github_oidc_provider_state == "present"
+    - github_oidc_provider_check.rc != 0
+
+- name: Build GitHub repository subjects
+  ansible.builtin.set_fact:
+    github_repo_subjects_effective: >-
+      {{
+        github_repo_subjects
+        if (github_repo_subjects | default([]) | length) > 0
+        else [github_repo_subject]
+      }}
+  when: github_deployer_enabled
+
+- name: Build GitHub deployer trust policy
+  ansible.builtin.set_fact:
+    github_deployer_assume_role_policy: "{{ github_deployer_assume_role_policy_doc | to_json }}"
+  vars:
+    github_repo_subject_value: >-
+      {{
+        github_repo_subjects_effective
+        if (github_repo_subjects_effective | length) > 1
+        else github_repo_subjects_effective[0]
+      }}
+    github_deployer_assume_role_policy_doc:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: "Allow"
+          Principal:
+            Federated: "{{ github_oidc_provider_arn }}"
+          Action: "sts:AssumeRoleWithWebIdentity"
+          Condition:
+            StringEquals:
+              "token.actions.githubusercontent.com:aud": "{{ github_oidc_audience }}"
+              "token.actions.githubusercontent.com:sub": "{{ github_repo_subject_value }}"
+  when:
+    - github_deployer_enabled
+    - github_oidc_provider_arn is defined
+
+- name: Build GitHub deployer inline policies
+  ansible.builtin.set_fact:
+    github_deployer_inline_policies: "{{ github_deployer_base_policies | combine(github_deployer_cloudfront_policy, recursive=True) }}"
+  vars:
+    github_deployer_base_policies:
+      S3Deploy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "SyncToBucket"
+            Effect: "Allow"
+            Action:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:DeleteObject"
+            Resource:
+              - "arn:aws:s3:::{{ github_deployer_s3_bucket_name }}"
+              - "arn:aws:s3:::{{ github_deployer_s3_bucket_name }}/*"
+    github_deployer_cloudfront_policy: >-
+      {{
+        {
+          'CloudFrontInvalidate': {
+            'Version': '2012-10-17',
+            'Statement': [
+              {
+                'Sid': 'FlushCache',
+                'Effect': 'Allow',
+                'Action': 'cloudfront:CreateInvalidation',
+                'Resource': 'arn:aws:cloudfront::%s:distribution/%s' | format(aws_account_id, github_deployer_cloudfront_distribution_id)
+              }
+            ]
+          }
+        }
+        if (github_deployer_cloudfront_distribution_id | default('') | length) > 0
+        else {}
+      }}
+  when:
+    - github_deployer_enabled
+    - github_deployer_state == "present"
+
+- name: Ensure GitHub deployer role is present
+  community.aws.iam_role:
+    name: "{{ github_deployer_role_name }}"
+    description: "{{ github_deployer_role_description }}"
+    assume_role_policy_document: "{{ github_deployer_assume_role_policy | default(omit) }}"
+    managed_policies: "{{ github_deployer_managed_policies }}"
+    policies: "{{ github_deployer_inline_policies | default({}) }}"
+    state: "{{ github_deployer_state }}"
+    tags: "{{ common_tags }}"
+  when:
+    - github_deployer_enabled

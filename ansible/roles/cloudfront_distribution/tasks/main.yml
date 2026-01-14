@@ -45,6 +45,14 @@
     - (cloudfront_state | default('present')) == 'present'
     - cloudfront_result.domain_name is defined
 
+- name: Store CloudFront distribution id
+  ansible.builtin.set_fact:
+    cloudfront_distribution_id: "{{ cloudfront_result.id }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - cloudfront_result.id is defined
+
 - name: Ensure CloudFront distribution is absent
   community.aws.cloudfront_distribution:
     state: absent

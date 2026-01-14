@@ -122,6 +122,8 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
     "Sid": "IAMRole",
     "Effect": "Allow",
     "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:GetOpenIDConnectProvider",
         "iam:CreateRole",
         "iam:DeleteRole",
         "iam:GetRole",
@@ -162,6 +164,24 @@ When finished, delete the access key in IAM.
 Make sure the credentials have permissions for S3, ACM, Route 53, CloudFront, and IAM.
 
 ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Set your default region in `ansible/group_vars/all.yml`, and keep `acm_region: "us-east-1"`.
+
+## GitHub Deployer Role (OIDC)
+This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/group_vars/all.yml`:
+```yaml
+github_deployer_enabled: true
+github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
+github_repo_name: "YOUR_REPO"
+github_repo_branch: "main"
+```
+
+The trust policy is generated from `github_repo_subject` (or `github_repo_subjects` if you need multiple branches). The role grants:
+- S3 sync permissions to `github_deployer_s3_bucket_name`.
+- CloudFront invalidation for `github_deployer_cloudfront_distribution_id` (if set).
+
+After running the playbook, fetch the role ARN for your GitHub workflow:
+```bash
+aws iam get-role --role-name <role-name> --query Role.Arn --output text
+```
 
 ## Run
 ```bash

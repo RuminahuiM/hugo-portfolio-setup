@@ -63,9 +63,25 @@ cloudfront_viewer_certificate:
   ssl_support_method: "sni-only"
   minimum_protocol_version: "TLSv1.2_2021"
 
+github_deployer_enabled: false
+github_account_name: "RuminahuiM"
+github_repo_name: "portfolio"
+github_repo_branch: "test-s3upload01"
+github_repo_subject: "repo:{{ github_account_name }}/{{ github_repo_name }}:ref:refs/heads/{{ github_repo_branch }}"
+github_repo_subjects: []
+github_oidc_provider_url: "https://token.actions.githubusercontent.com"
+github_oidc_audience: "sts.amazonaws.com"
+github_oidc_thumbprints:
+  - "6938fd4d98bab03faadb97b34396831e3780aea1"
+github_deployer_role_name: "{{ project_name }}-github-deployer"
+github_deployer_role_description: "GitHub Actions OIDC deployer for {{ project_name }}"
+github_deployer_managed_policies: []
+github_deployer_s3_bucket_name: "{{ s3_bucket_name }}"
+github_deployer_cloudfront_distribution_id: "{{ cloudfront_distribution_id | default('') }}"
+
 iam_enabled: false
-iam_role_name: "CHANGE_ME"
-iam_role_description: "Role managed by Ansible"
+iam_role_name: "HugoPortfolio_GithubS3_DeployerRole"
+iam_role_description: "Role managed by Ansible. Is used for a Github Workflow to be able to deploy the Hugo Site onto the S3 bucket after git push"
 iam_role_assume_policy: |
   {
     "Version": "2012-10-17",
