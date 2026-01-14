@@ -4,12 +4,12 @@ project_name: "hugo-portfolio"
 aws_region: "us-east-1"
 acm_region: "us-east-1"
 common_tags:
-  Project: "{{ project_name }}"
+  Project: "HugoPortfolioHosting"
   ManagedBy: "ansible"
 
 s3_enabled: true
 s3_bucket_name: "test-hugosetup-ansible02"
-s3_apply_tags: false
+s3_apply_tags: true
 s3_website_index: "index.html"
 s3_website_error: "404.html"
 s3_force_destroy: false
@@ -26,52 +26,36 @@ route53_private_zone: false
 route53_vpc_id: ""
 route53_vpc_region: "us-east-1"
 
-cloudfront_enabled: false
-cloudfront_caller_reference: "CHANGE_ME"
+cloudfront_enabled: true
+cloudfront_caller_reference: "hugo-portfolio-cf"
 cloudfront_comment: "Hugo portfolio distribution"
 cloudfront_default_root_object: "index.html"
 cloudfront_price_class: "PriceClass_100"
-cloudfront_aliases:
-  - "CHANGE_ME.example.com"
-cloudfront_origin_id: "s3-static-site"
-cloudfront_origin_domain_name: "CHANGE_ME"
-cloudfront_certificate_arn: "CHANGE_ME"
+cloudfront_aliases: []
+cloudfront_origin_id: "hugo-portfolio-origin"
+cloudfront_origin_domain_name: "{{ s3_bucket_name }}.s3.{{ aws_region }}.amazonaws.com"
+cloudfront_certificate_arn: ""
 
-cloudfront_distribution_config:
-  caller_reference: "{{ cloudfront_caller_reference }}"
-  enabled: true
-  comment: "{{ cloudfront_comment }}"
-  default_root_object: "{{ cloudfront_default_root_object }}"
-  price_class: "{{ cloudfront_price_class }}"
-  aliases:
-    quantity: "{{ cloudfront_aliases | length }}"
-    items: "{{ cloudfront_aliases }}"
-  origins:
-    quantity: 1
-    items:
-      - id: "{{ cloudfront_origin_id }}"
-        domain_name: "{{ cloudfront_origin_domain_name }}"
-        custom_origin_config:
-          http_port: 80
-          https_port: 443
-          origin_protocol_policy: "http-only"
-  default_cache_behavior:
-    target_origin_id: "{{ cloudfront_origin_id }}"
-    viewer_protocol_policy: "redirect-to-https"
-    allowed_methods:
-      quantity: 2
-      items: ["GET", "HEAD"]
-      cached_methods:
-        quantity: 2
-        items: ["GET", "HEAD"]
-    forwarded_values:
-      query_string: false
-      cookies:
-        forward: "none"
-  viewer_certificate:
-    acm_certificate_arn: "{{ cloudfront_certificate_arn }}"
-    ssl_support_method: "sni-only"
-    minimum_protocol_version: "TLSv1.2_2021"
+cloudfront_origins:
+  - id: "{{ cloudfront_origin_id }}"
+    domain_name: "{{ cloudfront_origin_domain_name }}"
+    s3_origin_config:
+      origin_access_identity: ""
+
+cloudfront_default_cache_behavior:
+  target_origin_id: "{{ cloudfront_origin_id }}"
+  viewer_protocol_policy: "redirect-to-https"
+  allowed_methods:
+    items: ["GET", "HEAD"]
+    cached_methods: ["GET", "HEAD"]
+  forwarded_values:
+    query_string: false
+    cookies:
+      forward: "none"
+
+cloudfront_viewer_certificate:
+  cloudfront_default_certificate: true
+  minimum_protocol_version: "TLSv1.2_2021"
 
 iam_enabled: false
 iam_role_name: "CHANGE_ME"

@@ -2,5 +2,14 @@
 - name: Create CloudFront distribution
   community.aws.cloudfront_distribution:
     state: present
-    distribution_config: "{{ cloudfront_distribution_config }}"
+    caller_reference: "{{ cloudfront_caller_reference }}"
+    comment: "{{ cloudfront_comment }}"
+    enabled: true
+    default_root_object: "{{ cloudfront_default_root_object }}"
+    price_class: "{{ cloudfront_price_class }}"
+    aliases: "{{ cloudfront_aliases }}"
+    origins: "{{ cloudfront_origins }}"
+    default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
+    viewer_certificate: "{{ cloudfront_viewer_certificate }}"
+    tags: "{{ common_tags }}"
   when: cloudfront_enabled
