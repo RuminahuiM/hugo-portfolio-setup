@@ -39,8 +39,7 @@ cloudfront_certificate_arn: ""
 cloudfront_origins:
   - id: "{{ cloudfront_origin_id }}"
     domain_name: "{{ cloudfront_origin_domain_name }}"
-    s3_origin_config:
-      origin_access_identity: ""
+    s3_origin_access_identity_enabled: true
 
 cloudfront_default_cache_behavior:
   target_origin_id: "{{ cloudfront_origin_id }}"
