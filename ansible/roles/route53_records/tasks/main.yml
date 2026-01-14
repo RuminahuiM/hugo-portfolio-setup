@@ -1,0 +1,232 @@
+---
+- name: Determine Route 53 record state
+  ansible.builtin.set_fact:
+    route53_records_state: "{{ route53_records_state | default(route53_state | default('present')) }}"
+  when: route53_enabled
+
+- name: Lookup Route 53 hosted zone id
+  ansible.builtin.command:
+    argv:
+      - aws
+      - route53
+      - list-hosted-zones
+      - --query
+      - "HostedZones[?Name=='{{ route53_zone_name }}.'].Id | [0]"
+      - --output
+      - text
+  register: route53_zone_lookup
+  changed_when: false
+  when:
+    - route53_enabled
+    - route53_zone_id is not defined
+
+- name: Store Route 53 hosted zone id
+  ansible.builtin.set_fact:
+    route53_zone_id: "{{ route53_zone_lookup.stdout | regex_replace('^/hostedzone/', '') }}"
+  when:
+    - route53_enabled
+    - route53_zone_id is not defined
+    - route53_zone_lookup.stdout is defined
+    - route53_zone_lookup.stdout != "None"
+
+- name: Ensure Route 53 hosted zone id is available
+  ansible.builtin.assert:
+    that:
+      - route53_zone_id is defined
+      - route53_zone_id | length > 0
+    fail_msg: "Route 53 hosted zone id is missing; create the hosted zone first."
+  when:
+    - route53_enabled
+    - route53_records_state == "present"
+
+- name: Lookup CloudFront domain name when missing
+  ansible.builtin.command:
+    argv:
+      - aws
+      - cloudfront
+      - list-distributions
+      - --query
+      - "DistributionList.Items[?Comment=='{{ cloudfront_comment }}'].DomainName | [0]"
+      - --output
+      - text
+  register: cloudfront_domain_lookup
+  changed_when: false
+  when:
+    - route53_enabled
+    - cloudfront_enabled
+    - (cloudfront_domain_name | default('')) == ''
+
+- name: Store CloudFront domain name
+  ansible.builtin.set_fact:
+    cloudfront_domain_name: "{{ cloudfront_domain_lookup.stdout }}"
+  when:
+    - route53_enabled
+    - cloudfront_enabled
+    - (cloudfront_domain_name | default('')) == ''
+    - cloudfront_domain_lookup.stdout is defined
+    - cloudfront_domain_lookup.stdout != "None"
+
+- name: Ensure CloudFront domain name is available
+  ansible.builtin.assert:
+    that:
+      - cloudfront_domain_name | length > 0
+    fail_msg: "CloudFront domain name is missing; create the distribution first."
+  when:
+    - route53_enabled
+    - cloudfront_enabled
+    - route53_records_state == "present"
+
+- name: Create www aliases to CloudFront
+  amazon.aws.route53:
+    zone: "{{ route53_zone_name }}"
+    record: "{{ s3_bucket_name }}"
+    type: "{{ item }}"
+    state: "{{ route53_records_state }}"
+    alias: true
+    alias_hosted_zone_id: "{{ cloudfront_hosted_zone_id }}"
+    alias_evaluate_target_health: false
+    value: "{{ cloudfront_domain_name }}"
+    private_zone: "{{ route53_private_zone }}"
+    overwrite: true
+  loop:
+    - A
+    - AAAA
+  when:
+    - route53_enabled
+    - cloudfront_enabled
+    - cloudfront_domain_name is defined
+    - cloudfront_domain_name | length > 0
+    - route53_records_state == "present"
+
+- name: Alias root domain to www
+  amazon.aws.route53:
+    zone: "{{ route53_zone_name }}"
+    record: "{{ route53_zone_name }}"
+    type: A
+    state: "{{ route53_records_state }}"
+    alias: true
+    alias_hosted_zone_id: "{{ route53_zone_id }}"
+    alias_evaluate_target_health: false
+    value: "{{ s3_bucket_name }}"
+    private_zone: "{{ route53_private_zone }}"
+    overwrite: true
+  when:
+    - route53_enabled
+    - route53_zone_id is defined
+    - route53_records_state == "present"
+
+- name: Remove root alias to www
+  amazon.aws.route53:
+    zone: "{{ route53_zone_name }}"
+    record: "{{ route53_zone_name }}"
+    type: A
+    state: "{{ route53_records_state }}"
+    alias: true
+    alias_hosted_zone_id: "{{ route53_zone_id }}"
+    alias_evaluate_target_health: false
+    value: "{{ s3_bucket_name }}"
+    private_zone: "{{ route53_private_zone }}"
+  when:
+    - route53_enabled
+    - route53_zone_id is defined
+    - route53_records_state == "absent"
+
+- name: Remove www aliases to CloudFront
+  amazon.aws.route53:
+    zone: "{{ route53_zone_name }}"
+    record: "{{ s3_bucket_name }}"
+    type: "{{ item }}"
+    state: "{{ route53_records_state }}"
+    alias: true
+    alias_hosted_zone_id: "{{ cloudfront_hosted_zone_id }}"
+    alias_evaluate_target_health: false
+    value: "{{ cloudfront_domain_name }}"
+    private_zone: "{{ route53_private_zone }}"
+  loop:
+    - A
+    - AAAA
+  when:
+    - route53_enabled
+    - cloudfront_enabled
+    - cloudfront_domain_name is defined
+    - cloudfront_domain_name | length > 0
+    - route53_records_state == "absent"
+
+- name: Lookup remaining Route 53 record sets for cleanup
+  ansible.builtin.command:
+    argv:
+      - aws
+      - route53
+      - list-resource-record-sets
+      - --hosted-zone-id
+      - "{{ route53_zone_id }}"
+      - --query
+      - "ResourceRecordSets[?Type!='NS' && Type!='SOA']"
+      - --output
+      - json
+  register: route53_record_sets
+  changed_when: false
+  when:
+    - route53_enabled
+    - route53_records_state == "absent"
+    - route53_zone_id is defined
+
+- name: Store remaining Route 53 record sets
+  ansible.builtin.set_fact:
+    route53_non_required_records: "{{ route53_record_sets.stdout | from_json }}"
+  when:
+    - route53_enabled
+    - route53_records_state == "absent"
+    - route53_zone_id is defined
+    - route53_record_sets.stdout is defined
+    - route53_record_sets.stdout | length > 0
+
+- name: Create temp file for Route 53 change batch
+  ansible.builtin.tempfile:
+    state: file
+    suffix: route53-change-batch.json
+  register: route53_change_batch_path
+  when:
+    - route53_enabled
+    - route53_records_state == "absent"
+    - route53_zone_id is defined
+    - route53_non_required_records is defined
+    - route53_non_required_records | length > 0
+
+- name: Build Route 53 delete change batch
+  ansible.builtin.copy:
+    dest: "{{ route53_change_batch_path.path }}"
+    content: |
+      {
+        "Changes": [
+        {% for record in route53_non_required_records %}
+          {
+            "Action": "DELETE",
+            "ResourceRecordSet": {{ record | to_json }}
+          }{% if not loop.last %},{% endif %}
+        {% endfor %}
+        ]
+      }
+  when:
+    - route53_enabled
+    - route53_records_state == "absent"
+    - route53_zone_id is defined
+    - route53_non_required_records is defined
+    - route53_non_required_records | length > 0
+
+- name: Remove remaining Route 53 records
+  ansible.builtin.command:
+    argv:
+      - aws
+      - route53
+      - change-resource-record-sets
+      - --hosted-zone-id
+      - "{{ route53_zone_id }}"
+      - --change-batch
+      - "file://{{ route53_change_batch_path.path }}"
+  when:
+    - route53_enabled
+    - route53_records_state == "absent"
+    - route53_zone_id is defined
+    - route53_non_required_records is defined
+    - route53_non_required_records | length > 0

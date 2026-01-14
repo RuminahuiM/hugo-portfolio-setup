@@ -1,4 +1,24 @@
 ---
+- name: Select CloudFront aliases and certificate
+  ansible.builtin.set_fact:
+    cloudfront_effective_aliases: "{{ cloudfront_aliases if cloudfront_use_custom_certificate else [] }}"
+    cloudfront_effective_viewer_certificate: >-
+      {{
+        cloudfront_viewer_certificate
+        if cloudfront_use_custom_certificate
+        else { 'cloudfront_default_certificate': true }
+      }}
+  vars:
+    cloudfront_use_custom_certificate: >-
+      {{
+        (acm_certificate_ready | default(true))
+        if (acm_enabled | default(false))
+        else true
+      }}
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+
 - name: Ensure CloudFront distribution is present
   community.aws.cloudfront_distribution:
     state: present
@@ -7,15 +27,23 @@
     enabled: true
     default_root_object: "{{ cloudfront_default_root_object }}"
     price_class: "{{ cloudfront_price_class }}"
-    aliases: "{{ cloudfront_aliases }}"
+    aliases: "{{ cloudfront_effective_aliases }}"
     origins: "{{ cloudfront_origins }}"
     default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
-    viewer_certificate: "{{ cloudfront_viewer_certificate }}"
+    viewer_certificate: "{{ cloudfront_effective_viewer_certificate }}"
     tags: "{{ common_tags }}"
   register: cloudfront_result
   when:
     - cloudfront_enabled
     - (cloudfront_state | default('present')) == 'present'
+
+- name: Store CloudFront domain name
+  ansible.builtin.set_fact:
+    cloudfront_domain_name: "{{ cloudfront_result.domain_name }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - cloudfront_result.domain_name is defined
 
 - name: Ensure CloudFront distribution is absent
   community.aws.cloudfront_distribution:
@@ -28,9 +56,22 @@
 
 - name: Extract CloudFront origin access identity
   ansible.builtin.set_fact:
-    cloudfront_oai_path: "{{ cloudfront_result.origins['items'][0].s3_origin_config.origin_access_identity | default('') }}"
+    cloudfront_oai_path: >-
+      {{
+        (cloudfront_result.origins['items'] | default([]) | first | default({}))
+          .get('s3_origin_config', {})
+          .get('origin_access_identity', '')
+      }}
+  when:
+    - cloudfront_enabled
+    - s3_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (s3_state | default('present')) == 'present'
+
+- name: Build CloudFront origin access identity ARN
+  ansible.builtin.set_fact:
     cloudfront_oai_id: "{{ cloudfront_oai_path.split('/')[-1] }}"
-    cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_id }}"
+    cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_path.split('/')[-1] }}"
   when:
     - cloudfront_enabled
     - s3_enabled
@@ -74,6 +115,10 @@
     state: present
     region: "{{ aws_region }}"
     policy: "{{ s3_cloudfront_policy }}"
+  register: s3_policy_result
+  retries: "{{ s3_policy_retries | default(18) }}"
+  delay: "{{ s3_policy_delay | default(10) }}"
+  until: s3_policy_result is succeeded
   when:
     - cloudfront_enabled
     - s3_enabled

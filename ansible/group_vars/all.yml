@@ -1,5 +1,6 @@
 ---
 project_name: "hugo-portfolio"
+domain_name: "test-hugosetup-ansible.ch"
 
 aws_region: "us-east-1"
 acm_region: "us-east-1"
@@ -8,19 +9,21 @@ common_tags:
   ManagedBy: "ansible"
 
 s3_enabled: true
-s3_bucket_name: "test-hugosetup-ansible02"
+bucket_subdomain: "www"
+s3_bucket_name: "{{ bucket_subdomain }}.{{ domain_name }}"
 s3_apply_tags: true
 s3_website_index: "index.html"
 s3_website_error: "404.html"
 s3_force_destroy: false
 
-acm_enabled: false
-acm_domain_name: "example.com"
-acm_subject_alternative_names: []
+acm_enabled: true
+acm_domain_name: "{{ domain_name }}"
+acm_subject_alternative_names:
+  - "*.{{ domain_name }}"
 acm_validation_method: "DNS"
 
-route53_enabled: false
-route53_zone_name: "example.com"
+route53_enabled: true
+route53_zone_name: "{{ domain_name }}"
 route53_comment: "Managed by Ansible"
 route53_private_zone: false
 route53_vpc_id: ""
@@ -31,7 +34,10 @@ cloudfront_caller_reference: "hugo-portfolio-cf"
 cloudfront_comment: "Hugo portfolio distribution"
 cloudfront_default_root_object: "index.html"
 cloudfront_price_class: "PriceClass_100"
-cloudfront_aliases: []
+cloudfront_aliases:
+  - "{{ domain_name }}"
+  - "{{ s3_bucket_name }}"
+cloudfront_hosted_zone_id: "Z2FDTNDATAQYW2"
 cloudfront_origin_id: "hugo-portfolio-origin"
 cloudfront_origin_domain_name: "{{ s3_bucket_name }}.s3.{{ aws_region }}.amazonaws.com"
 cloudfront_certificate_arn: ""
@@ -53,7 +59,8 @@ cloudfront_default_cache_behavior:
       forward: "none"
 
 cloudfront_viewer_certificate:
-  cloudfront_default_certificate: true
+  acm_certificate_arn: "{{ acm_certificate_arn }}"
+  ssl_support_method: "sni-only"
   minimum_protocol_version: "TLSv1.2_2021"
 
 iam_enabled: false
