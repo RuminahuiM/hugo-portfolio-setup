@@ -12,4 +12,43 @@
     default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
     viewer_certificate: "{{ cloudfront_viewer_certificate }}"
     tags: "{{ common_tags }}"
+  register: cloudfront_result
   when: cloudfront_enabled
+
+- name: Extract CloudFront origin access identity
+  ansible.builtin.set_fact:
+    cloudfront_oai_path: "{{ cloudfront_result.origins['items'][0].s3_origin_config.origin_access_identity | default('') }}"
+    cloudfront_oai_id: "{{ cloudfront_oai_path.split('/')[-1] }}"
+    cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_id }}"
+  when: cloudfront_enabled and s3_enabled
+
+- name: Ensure CloudFront origin access identity is configured
+  ansible.builtin.assert:
+    that:
+      - cloudfront_oai_path != ""
+    fail_msg: "CloudFront origin access identity not found; set s3_origin_access_identity_enabled: true for the S3 origin."
+  when: cloudfront_enabled and s3_enabled
+
+- name: Build S3 bucket policy for CloudFront
+  ansible.builtin.set_fact:
+    s3_cloudfront_policy: "{{ s3_cloudfront_policy_doc | to_json }}"
+  vars:
+    s3_cloudfront_policy_doc:
+      Version: "2012-10-17"
+      Statement:
+        - Sid: "AllowCloudFrontOriginAccessIdentityReadOnly"
+          Effect: "Allow"
+          Principal:
+            AWS: "{{ cloudfront_oai_arn }}"
+          Action:
+            - "s3:GetObject"
+          Resource: "arn:aws:s3:::{{ s3_bucket_name }}/*"
+  when: cloudfront_enabled and s3_enabled
+
+- name: Apply S3 bucket policy for CloudFront
+  amazon.aws.s3_bucket:
+    name: "{{ s3_bucket_name }}"
+    state: present
+    region: "{{ aws_region }}"
+    policy: "{{ s3_cloudfront_policy }}"
+  when: cloudfront_enabled and s3_enabled

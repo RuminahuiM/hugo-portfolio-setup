@@ -99,19 +99,23 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
     {
     "Sid": "CloudFront",
     "Effect": "Allow",
-    "Action": [
-        "cloudfront:CreateDistribution",
-        "cloudfront:UpdateDistribution",
-        "cloudfront:GetDistribution",
-        "cloudfront:GetDistributionConfig",
-        "cloudfront:DeleteDistribution",
-        "cloudfront:ListDistributions",
-        "cloudfront:CreateInvalidation",
-        "cloudfront:GetInvalidation",
-        "cloudfront:TagResource",
-        "cloudfront:UntagResource",
-        "cloudfront:ListTagsForResource"
-    ],
+        "Action": [
+            "cloudfront:CreateDistribution",
+            "cloudfront:UpdateDistribution",
+            "cloudfront:GetDistribution",
+            "cloudfront:GetDistributionConfig",
+            "cloudfront:DeleteDistribution",
+            "cloudfront:ListDistributions",
+            "cloudfront:CreateCloudFrontOriginAccessIdentity",
+            "cloudfront:GetCloudFrontOriginAccessIdentity",
+            "cloudfront:ListCloudFrontOriginAccessIdentities",
+            "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+            "cloudfront:CreateInvalidation",
+            "cloudfront:GetInvalidation",
+            "cloudfront:TagResource",
+            "cloudfront:UntagResource",
+            "cloudfront:ListTagsForResource"
+        ],
     "Resource": "*"
     },
     {
