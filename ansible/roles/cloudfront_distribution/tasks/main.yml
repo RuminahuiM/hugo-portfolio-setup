@@ -1,5 +1,5 @@
 ---
-- name: Create CloudFront distribution
+- name: Ensure CloudFront distribution is present
   community.aws.cloudfront_distribution:
     state: present
     caller_reference: "{{ cloudfront_caller_reference }}"
@@ -13,21 +13,40 @@
     viewer_certificate: "{{ cloudfront_viewer_certificate }}"
     tags: "{{ common_tags }}"
   register: cloudfront_result
-  when: cloudfront_enabled
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+
+- name: Ensure CloudFront distribution is absent
+  community.aws.cloudfront_distribution:
+    state: absent
+    caller_reference: "{{ cloudfront_caller_reference }}"
+    wait: true
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'absent'
 
 - name: Extract CloudFront origin access identity
   ansible.builtin.set_fact:
     cloudfront_oai_path: "{{ cloudfront_result.origins['items'][0].s3_origin_config.origin_access_identity | default('') }}"
     cloudfront_oai_id: "{{ cloudfront_oai_path.split('/')[-1] }}"
     cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_id }}"
-  when: cloudfront_enabled and s3_enabled
+  when:
+    - cloudfront_enabled
+    - s3_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (s3_state | default('present')) == 'present'
 
 - name: Ensure CloudFront origin access identity is configured
   ansible.builtin.assert:
     that:
       - cloudfront_oai_path != ""
     fail_msg: "CloudFront origin access identity not found; set s3_origin_access_identity_enabled: true for the S3 origin."
-  when: cloudfront_enabled and s3_enabled
+  when:
+    - cloudfront_enabled
+    - s3_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (s3_state | default('present')) == 'present'
 
 - name: Build S3 bucket policy for CloudFront
   ansible.builtin.set_fact:
@@ -43,7 +62,11 @@
           Action:
             - "s3:GetObject"
           Resource: "arn:aws:s3:::{{ s3_bucket_name }}/*"
-  when: cloudfront_enabled and s3_enabled
+  when:
+    - cloudfront_enabled
+    - s3_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (s3_state | default('present')) == 'present'
 
 - name: Apply S3 bucket policy for CloudFront
   amazon.aws.s3_bucket:
@@ -51,4 +74,8 @@
     state: present
     region: "{{ aws_region }}"
     policy: "{{ s3_cloudfront_policy }}"
-  when: cloudfront_enabled and s3_enabled
+  when:
+    - cloudfront_enabled
+    - s3_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (s3_state | default('present')) == 'present'

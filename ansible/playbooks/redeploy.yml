@@ -1,0 +1,3 @@
+---
+- import_playbook: destroy.yml
+- import_playbook: site.yml
