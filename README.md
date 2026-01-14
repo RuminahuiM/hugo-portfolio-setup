@@ -169,6 +169,13 @@ cd ansible
 ansible-playbook playbooks/site.yml
 ```
 
+## Post-validation (ACM -> CloudFront)
+CloudFront can only accept custom aliases when the ACM certificate is `ISSUED` in `us-east-1`. The first run requests the cert and creates DNS validation records; once ACM finishes validation, run this playbook to attach the custom cert + aliases:
+```bash
+cd ansible
+ansible-playbook playbooks/post_validation.yml
+```
+
 ## Destroy / Redeploy
 Destroy all enabled resources (force-deletes S3 objects):
 ```bash
