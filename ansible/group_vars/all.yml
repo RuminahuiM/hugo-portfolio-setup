@@ -1,8 +1,8 @@
 ---
 project_name: "hugo-portfolio"
-domain_name: "test-hugosetup-ansible.ch"
+domain_name: "example.com"
 
-aws_region: "us-east-1"
+aws_region: "eu-north-1"
 acm_region: "us-east-1"
 common_tags:
   Project: "HugoPortfolioHosting"
@@ -63,10 +63,10 @@ cloudfront_viewer_certificate:
   ssl_support_method: "sni-only"
   minimum_protocol_version: "TLSv1.2_2021"
 
-github_deployer_enabled: true
-github_account_name: "RuminahuiM"
-github_repo_name: "portfolio"
-github_repo_branch: "test-s3upload01"
+github_deployer_enabled: false
+github_account_name: "CHANGE_ME"
+github_repo_name: "CHANGE_ME"
+github_repo_branch: "main"
 github_repo_subject: "repo:{{ github_account_name }}/{{ github_repo_name }}:ref:refs/heads/{{ github_repo_branch }}"
 github_repo_subjects: []
 github_oidc_provider_url: "https://token.actions.githubusercontent.com"
@@ -80,8 +80,8 @@ github_deployer_s3_bucket_name: "{{ s3_bucket_name }}"
 github_deployer_cloudfront_distribution_id: "{{ cloudfront_distribution_id | default('') }}"
 
 iam_enabled: false
-iam_role_name: "HugoPortfolio_GithubS3_DeployerRole"
-iam_role_description: "Role managed by Ansible. Is used for a Github Workflow to be able to deploy the Hugo Site onto the S3 bucket after git push"
+iam_role_name: "CHANGE_ME"
+iam_role_description: "Role managed by Ansible"
 iam_role_assume_policy: |
   {
     "Version": "2012-10-17",

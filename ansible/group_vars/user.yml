@@ -1,0 +1,14 @@
+---
+project_name: "hugo-portfolio"
+domain_name: "example.com"
+
+aws_region: "eu-north-1"
+bucket_subdomain: "www"
+
+common_tags:
+  Project: "HugoPortfolioHosting"
+
+github_deployer_enabled: true
+github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
+github_repo_name: "YOUR_REPO"
+github_repo_branch: "main"
