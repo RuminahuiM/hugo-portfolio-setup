@@ -1,0 +1,27 @@
+---
+- name: Tear down Hugo portfolio AWS resources
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
+  vars:
+    s3_state: absent
+    cloudfront_state: absent
+    acm_state: absent
+    route53_state: absent
+    iam_state: absent
+    s3_force_destroy: true
+  environment:
+    AWS_REGION: "{{ aws_region }}"
+    AWS_DEFAULT_REGION: "{{ aws_region }}"
+  roles:
+    - role: cloudfront_distribution
+      when: cloudfront_enabled
+    - role: s3_static_site
+      when: s3_enabled
+    - role: acm_certificate
+      when: acm_enabled
+    - role: route53_hosted_zone
+      when: route53_enabled
+    - role: iam_role
+      when: iam_enabled

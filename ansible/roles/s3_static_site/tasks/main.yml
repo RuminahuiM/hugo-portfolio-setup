@@ -1,15 +1,29 @@
 ---
-- name: Create S3 bucket for static site
+- name: Ensure S3 bucket is present
   amazon.aws.s3_bucket:
     name: "{{ s3_bucket_name }}"
     state: present
     region: "{{ aws_region }}"
     tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
-  when: s3_enabled
+  when:
+    - s3_enabled
+    - (s3_state | default('present')) == 'present'
+
+- name: Ensure S3 bucket is absent
+  amazon.aws.s3_bucket:
+    name: "{{ s3_bucket_name }}"
+    state: absent
+    region: "{{ aws_region }}"
+    force: "{{ s3_force_destroy | default(false) }}"
+  when:
+    - s3_enabled
+    - (s3_state | default('present')) == 'absent'
 
 - name: Placeholder for bucket policy and access configuration
   ansible.builtin.debug:
     msg:
       - "TODO: attach bucket policy or CloudFront OAC permissions"
       - "TODO: decide public access block settings"
-  when: s3_enabled
+  when:
+    - s3_enabled
+    - (s3_state | default('present')) == 'present'

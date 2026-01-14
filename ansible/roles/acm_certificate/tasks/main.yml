@@ -4,7 +4,7 @@
     domain_name: "{{ acm_domain_name }}"
     subject_alternative_names: "{{ acm_subject_alternative_names }}"
     validation_method: "{{ acm_validation_method }}"
-    state: present
+    state: "{{ acm_state | default('present') }}"
     region: "{{ acm_region }}"
     tags: "{{ common_tags }}"
   when: acm_enabled
@@ -13,4 +13,6 @@
   ansible.builtin.debug:
     msg:
       - "TODO: create DNS validation records for {{ acm_domain_name }}"
-  when: acm_enabled
+  when:
+    - acm_enabled
+    - (acm_state | default('present')) == 'present'

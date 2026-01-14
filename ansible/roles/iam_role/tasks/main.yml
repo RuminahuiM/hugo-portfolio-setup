@@ -6,6 +6,6 @@
     assume_role_policy_document: "{{ iam_role_assume_policy }}"
     managed_policies: "{{ iam_role_managed_policies }}"
     policies: "{{ iam_role_inline_policies }}"
-    state: present
+    state: "{{ iam_state | default('present') }}"
     tags: "{{ common_tags }}"
   when: iam_enabled

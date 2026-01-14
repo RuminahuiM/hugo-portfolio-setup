@@ -168,3 +168,16 @@ ACM certificates for CloudFront must be created in `us-east-1`, so the playbook 
 cd ansible
 ansible-playbook playbooks/site.yml
 ```
+
+## Destroy / Redeploy
+Destroy all enabled resources (force-deletes S3 objects):
+```bash
+cd ansible
+ansible-playbook playbooks/destroy.yml
+```
+
+Destroy then recreate in one step:
+```bash
+cd ansible
+ansible-playbook playbooks/redeploy.yml
+```
