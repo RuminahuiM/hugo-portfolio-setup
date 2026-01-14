@@ -10,11 +10,13 @@
   roles:
     - role: s3_static_site
       when: s3_enabled
-    - role: acm_certificate
-      when: acm_enabled
     - role: route53_hosted_zone
       when: route53_enabled
+    - role: acm_certificate
+      when: acm_enabled
     - role: cloudfront_distribution
       when: cloudfront_enabled
+    - role: route53_records
+      when: route53_enabled
     - role: iam_role
       when: iam_enabled
