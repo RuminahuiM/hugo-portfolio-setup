@@ -94,6 +94,7 @@
   ansible.builtin.set_fact:
     github_repo_variables:
       - "AWS_REGION={{ aws_region }}"
+      - "AWS_ROLE_ARN={{ github_deployer_role_arn | default('') }}"
       - "BUCKET_NAME={{ github_deployer_s3_bucket_name }}"
       - "CF_DISTRIBUTION_ID={{ github_deployer_cloudfront_distribution_id | default(cloudfront_distribution_id | default('')) }}"
       - "SITE_BASE_URL={{ github_site_base_url }}"

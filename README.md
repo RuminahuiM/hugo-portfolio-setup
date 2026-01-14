@@ -178,8 +178,8 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
 
 Set the credentials on the machine that runs Ansible (use your default region, e.g. `eu-north-1`):
 ```bash
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
+export AWS_ACCESS_KEY_ID=REDACTED
+export AWS_SECRET_ACCESS_KEY=REDACTED
 export AWS_REGION=eu-north-1
 ```
 
@@ -239,10 +239,10 @@ Set GitHub repository variables:
 1) In GitHub, open your repo → Settings → Secrets and variables → Actions → Variables.
 2) Create variables matching the names printed by the playbook:
    - `AWS_REGION`
+   - `AWS_ROLE_ARN` (if your workflow uses OIDC)
    - `BUCKET_NAME`
    - `CF_DISTRIBUTION_ID`
    - `SITE_BASE_URL`
-3) If your workflow uses an OIDC role variable or secret, set `AWS_ROLE_ARN` from the playbook output.
 
 After ACM validation is complete, run:
 ```bash
