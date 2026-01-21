@@ -11,7 +11,7 @@ This repo includes an `ansible/` scaffold to provision:
 
 The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
 
-Edit `ansible/group_vars/all.yml` to set values and toggle `*_enabled` flags before running. The CloudFront `distribution_config` and S3 policy/access steps are placeholders to refine later.
+Edit `ansible/group_vars/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/group_vars/all.yml` keeps defaults.
 
 ## Prerequisites
 - Python 3 + pip
@@ -179,9 +179,9 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
 
 Set the credentials on the machine that runs Ansible (use your default region, e.g. `eu-north-1`):
 ```bash
-export AWS_ACCESS_KEY_ID=REDACTED
-export AWS_SECRET_ACCESS_KEY=REDACTED
-export AWS_REGION=eu-north-1
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_REGION=...
 ```
 
 Validate credentials before running Ansible:
