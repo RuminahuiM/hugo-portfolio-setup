@@ -10,6 +10,21 @@
     - (s3_state | default('present')) == 'present'
 
 - name: Ensure S3 bucket is absent
+  ansible.builtin.command:
+    argv:
+      - aws
+      - s3
+      - rm
+      - "s3://{{ s3_bucket_name }}"
+      - --recursive
+  register: s3_empty_result
+  changed_when: false
+  failed_when: false
+  when:
+    - s3_enabled
+    - (s3_state | default('present')) == 'absent'
+
+- name: Ensure S3 bucket is absent
   amazon.aws.s3_bucket:
     name: "{{ s3_bucket_name }}"
     state: absent

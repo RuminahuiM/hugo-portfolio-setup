@@ -19,16 +19,30 @@
     AWS_DEFAULT_REGION: "{{ aws_region }}"
   roles:
     - role: route53_records
-      when: route53_enabled
+      when:
+        - route53_enabled
+        - not keep_route53
     - role: cloudfront_distribution
-      when: cloudfront_enabled
+      when:
+        - cloudfront_enabled
+        - not keep_cloudfront
     - role: s3_static_site
-      when: s3_enabled
+      when:
+        - s3_enabled
+        - not keep_s3
     - role: acm_certificate
-      when: acm_enabled
+      when:
+        - acm_enabled
+        - not keep_acm
     - role: route53_hosted_zone
-      when: route53_enabled
+      when:
+        - route53_enabled
+        - not keep_route53
     - role: github_deployer_role
-      when: github_deployer_enabled
+      when:
+        - github_deployer_enabled
+        - not keep_github_deployer
     - role: iam_role
-      when: iam_enabled
+      when:
+        - iam_enabled
+        - not keep_iam_role

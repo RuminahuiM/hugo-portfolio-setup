@@ -55,6 +55,7 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
     "Action": [
         "s3:CreateBucket",
         "s3:DeleteBucket",
+        "s3:DeleteObject",
         "s3:ListBucket",
         "s3:GetBucketLocation",
         "s3:GetBucketPolicy",
@@ -206,6 +207,13 @@ This is where you set:
 - `github_repo_name`
 - `github_repo_branch`
 - `github_deployer_enabled`
+- Optional keep flags for `destroy.yml` / `redeploy.yml`:
+  - `keep_acm` (default `true`)
+  - `keep_route53` (default `true`)
+  - `keep_s3` (default `false`)
+  - `keep_cloudfront` (default `false`)
+  - `keep_github_deployer` (default `false`)
+  - `keep_iam_role` (default `false`)
 
 ## GitHub Deployer Role (OIDC)
 This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/group_vars/user.yml`:

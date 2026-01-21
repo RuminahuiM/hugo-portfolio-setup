@@ -8,6 +8,13 @@ common_tags:
   Project: "HugoPortfolioHosting"
   ManagedBy: "ansible"
 
+keep_acm: true
+keep_route53: true
+keep_s3: false
+keep_cloudfront: false
+keep_github_deployer: false
+keep_iam_role: false
+
 s3_enabled: true
 bucket_subdomain: "www"
 s3_bucket_name: "{{ bucket_subdomain }}.{{ domain_name }}"

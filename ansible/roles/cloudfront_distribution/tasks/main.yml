@@ -1,10 +1,40 @@
 ---
+- name: Lookup CloudFront distribution id by primary alias
+  ansible.builtin.command:
+    argv:
+      - aws
+      - cloudfront
+      - list-distributions
+      - --query
+      - >-
+        DistributionList.Items[?Aliases.Quantity > `0` && contains(Aliases.Items, '{{ cloudfront_aliases | first }}')].Id | [0]
+      - --output
+      - text
+  register: cloudfront_alias_lookup
+  changed_when: false
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (cloudfront_distribution_id | default('')) == ''
+    - cloudfront_aliases is defined
+    - cloudfront_aliases | length > 0
+
+- name: Store CloudFront distribution id from alias lookup
+  ansible.builtin.set_fact:
+    cloudfront_distribution_id: "{{ cloudfront_alias_lookup.stdout }}"
+  when:
+    - cloudfront_enabled
+    - (cloudfront_state | default('present')) == 'present'
+    - (cloudfront_distribution_id | default('')) == ''
+    - cloudfront_alias_lookup.stdout is defined
+    - cloudfront_alias_lookup.stdout != "None"
+
 - name: Select CloudFront aliases and certificate
   ansible.builtin.set_fact:
     cloudfront_effective_aliases: "{{ cloudfront_aliases if cloudfront_use_custom_certificate else [] }}"
     cloudfront_effective_viewer_certificate: >-
       {{
-        cloudfront_viewer_certificate
+        cloudfront_viewer_certificate | combine({ 'cloudfront_default_certificate': false })
         if cloudfront_use_custom_certificate
         else { 'cloudfront_default_certificate': true }
       }}
@@ -22,7 +52,8 @@
 - name: Ensure CloudFront distribution is present
   community.aws.cloudfront_distribution:
     state: present
-    caller_reference: "{{ cloudfront_caller_reference }}"
+    caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
+    distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
     comment: "{{ cloudfront_comment }}"
     enabled: true
     default_root_object: "{{ cloudfront_default_root_object }}"
@@ -91,8 +122,6 @@
     aliases: []
     origins: "{{ cloudfront_origins }}"
     default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
-    viewer_certificate:
-      cloudfront_default_certificate: true
     wait: true
     wait_timeout: "{{ cloudfront_wait_timeout | default(1800) }}"
   when:
@@ -104,7 +133,7 @@
 - name: Ensure CloudFront distribution is absent
   community.aws.cloudfront_distribution:
     state: absent
-    caller_reference: "{{ cloudfront_caller_reference }}"
+    caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
     distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
     wait: true
   when:

@@ -5,6 +5,13 @@ domain_name: "ruminahui.ch"
 aws_region: "eu-north-1"
 bucket_subdomain: "www"
 
+keep_acm: true
+keep_route53: true
+keep_s3: false
+keep_cloudfront: false
+keep_github_deployer: false
+keep_iam_role: false
+
 common_tags:
   Project: "HugoPortfolioHosting"
 
