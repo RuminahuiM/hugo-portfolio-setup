@@ -1,17 +1,12 @@
 # hugo-portfolio-setup
-Sets up a Hugo portfolio hosted on AWS through Ansible.
+Provision a Hugo portfolio stack on AWS with Ansible:
+- S3 bucket (site origin)
+- ACM certificate (us-east-1 for CloudFront)
+- Route 53 hosted zone + records
+- CloudFront distribution
+- Optional GitHub Actions OIDC deployer role
 
-## Ansible scaffold
-This repo includes an `ansible/` scaffold to provision:
-- an S3 bucket for a static website
-- a certificate in ACM
-- a hosted zone in Route 53
-- a CloudFront distribution
-- an IAM role
-
-The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
-
-Edit `ansible/inventory/group_vars/all/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/inventory/group_vars/all/all.yml` keeps defaults.
+Note: S3 website hosting/public access settings are not enabled yet (see the TODO in the S3 role).
 
 ## Prerequisites
 - Python 3 + pip
@@ -20,13 +15,13 @@ Edit `ansible/inventory/group_vars/all/user.yml` to set values and toggle `*_ena
 - boto3/botocore
 - Ansible collections: `amazon.aws`, `community.aws`
 
-Example install:
+Install:
 ```bash
 pip install ansible boto3 botocore awscli
 ansible-galaxy collection install -r ansible/requirements.yml
 ```
 
-Verify prerequisites:
+Verify:
 ```bash
 python3 --version
 pip3 --version
@@ -39,12 +34,17 @@ PY
 ansible-galaxy collection list | grep -E 'amazon.aws|community.aws'
 ```
 
-## AWS CLI credentials (explicit setup)
-You need AWS credentials on the machine running Ansible. For this repo we use a single method: IAM user access keys.
+## AWS credentials
+You need AWS credentials on the machine running Ansible. Use an IAM user with access keys.
+
 1) AWS Console -> IAM -> Users -> Create user.
-2) Do not enable "AWS Management Console access" (CLI only).
+2) Do not enable AWS Management Console access (CLI only).
 3) Attach permissions for S3, ACM, Route 53, CloudFront, and IAM (or temporary `AdministratorAccess` while testing).
-    **Permissions Policy for the User:**
+
+Permissions policy for the user (click to expand):
+<details>
+<summary>IAM policy JSON</summary>
+
 ```
 {
 "Version": "2012-10-17",
@@ -176,52 +176,111 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
 }
 ```
 
-4) Open the user -> Security credentials -> Create access key (CLI).
-5) Copy the Access Key ID and Secret Access Key.
+</details>
 
-Set the credentials on the machine that runs Ansible (use your default region, e.g. `eu-north-1`):
+4) IAM user -> Security credentials -> Create access key (CLI).
+5) Export the credentials:
 ```bash
 export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 export AWS_REGION=...
 ```
 
-Validate credentials before running Ansible:
+Validate credentials:
 ```bash
 aws sts get-caller-identity
 ```
 
-When finished, delete the access key in IAM.
+ACM certificates for CloudFront must be created in `us-east-1`, so keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all/all.yml`.
 
-Make sure the credentials have permissions for S3, ACM, Route 53, CloudFront, and IAM.
+## Configure user inputs
+Defaults live in `ansible/inventory/group_vars/all/all.yml`.
+Your overrides live in `ansible/inventory/group_vars/all/user.yml`.
 
-ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all/all.yml`, and set your normal region in `ansible/inventory/group_vars/all/user.yml`.
+If you are starting fresh:
+```bash
+cp ansible/inventory/group_vars/user.example.yml ansible/inventory/group_vars/all/user.yml
+```
+`user.yml` is git-ignored so local values do not get committed.
 
-## Configure User Inputs
-Edit the user configuration file before running anything:
-`ansible/inventory/group_vars/all/user.yml`
-
-If you're starting fresh, copy `ansible/inventory/group_vars/user.example.yml` to `ansible/inventory/group_vars/all/user.yml` and fill it in.
-`user.yml` is git-ignored so your local settings don't get committed.
-
-This is where you set:
+Common settings:
 - `domain_name`
 - `aws_region`
-- `bucket_subdomain`
-- `github_account_name`
-- `github_repo_name`
-- `github_repo_branch`
-- `github_deployer_enabled`
-- Optional keep flags for `destroy.yml` / `redeploy.yml`:
-  - `keep_acm` (default `true`)
-  - `keep_route53` (default `true`)
-  - `keep_s3` (default `false`)
-  - `keep_cloudfront` (default `false`)
-  - `keep_github_deployer` (default `false`)
-  - `keep_iam_role` (default `false`)
+- `bucket_subdomain` (bucket name becomes `bucket_subdomain.domain_name`)
+- GitHub OIDC settings (`github_*`)
 
-## GitHub Deployer Role (OIDC)
-This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/inventory/group_vars/all/user.yml`:
+Keep flags (used by `destroy.yml` and `redeploy.yml`):
+- `keep_acm` (default `true`)
+- `keep_route53` (default `true`)
+- `keep_s3` (default `false`)
+- `keep_cloudfront` (default `false`)
+- `keep_github_deployer` (default `false`)
+- `keep_iam_role` (default `false`)
+
+You can override any of these per run with `-e`.
+
+## Initial deploy (normal run)
+```bash
+cd ansible
+ansible-playbook playbooks/site.yml
+```
+This creates S3, Route 53, ACM, CloudFront, and (optionally) the GitHub OIDC role.
+
+On the first run:
+- ACM is requested and DNS validation records are created in Route 53.
+- CloudFront is created with the default certificate until ACM is issued.
+
+## After the first run
+The playbook prints:
+- GitHub Actions repository variables to set.
+- Route 53 name servers for your hosted zone.
+
+Update your registrar to use the printed Route 53 name servers (DNS propagation can take minutes to hours).
+
+Set GitHub repository variables:
+1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
+2) Add the variables printed by the playbook:
+   - `AWS_REGION`
+   - `AWS_ROLE_ARN`
+   - `BUCKET_NAME`
+   - `CF_DISTRIBUTION_ID`
+   - `SITE_BASE_URL`
+
+## Post-validation (attach ACM to CloudFront)
+CloudFront can only use a custom certificate and aliases after the ACM cert is `ISSUED` in `us-east-1`.
+Once validation is complete, run:
+```bash
+cd ansible
+ansible-playbook playbooks/post_validation.yml
+```
+
+## Redeploy and destroy use cases
+All commands run from `ansible/`.
+
+Default redeploy (keeps ACM and Route 53):
+```bash
+ansible-playbook playbooks/redeploy.yml
+```
+This removes and recreates S3, CloudFront, and the GitHub deployer role. ACM and Route 53 are kept.
+
+Full redeploy (also recreates ACM and Route 53):
+```bash
+ansible-playbook playbooks/redeploy.yml -e '{"keep_acm": false, "keep_route53": false}'
+```
+Note: recreating the hosted zone changes name servers, so you must update the registrar again.
+
+Destroy only (uses keep flags in `user.yml`):
+```bash
+ansible-playbook playbooks/destroy.yml
+```
+
+Full destroy (remove ACM and Route 53 too):
+```bash
+ansible-playbook playbooks/destroy.yml -e '{"keep_acm": false, "keep_route53": false}'
+```
+
+## GitHub deployer role (OIDC)
+Enable it in `ansible/inventory/group_vars/all/user.yml`:
 ```yaml
 github_deployer_enabled: true
 github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
@@ -229,64 +288,10 @@ github_repo_name: "YOUR_REPO"
 github_repo_branch: "main"
 ```
 
-The trust policy is generated from `github_repo_subject` (or `github_repo_subjects` if you need multiple branches). The role grants:
+The role grants:
 - S3 sync permissions to `github_deployer_s3_bucket_name`.
 - CloudFront invalidation for `github_deployer_cloudfront_distribution_id` (if set).
 
-After running the playbook, fetch the role ARN for your GitHub workflow:
-```bash
-aws iam get-role --role-name <role-name> --query Role.Arn --output text
-```
-
-## After The First Run
-The `site.yml` playbook prints:
-- The GitHub Actions repository variables to set.
-- The Route 53 name servers for your hosted zone.
-
-Set Route 53 name servers at your registrar:
-1) Go to your domain registrar’s DNS settings.
-2) Replace the current name servers with the Route 53 name servers printed by the playbook.
-3) Wait for DNS propagation (can take minutes to hours).
-
-Set GitHub repository variables:
-1) In GitHub, open your repo → Settings → Secrets and variables → Actions → Variables.
-2) Create variables matching the names printed by the playbook:
-   - `AWS_REGION`
-   - `AWS_ROLE_ARN` (if your workflow uses OIDC)
-   - `BUCKET_NAME`
-   - `CF_DISTRIBUTION_ID`
-   - `SITE_BASE_URL`
-
-After ACM validation is complete, run:
-```bash
-cd ansible
-ansible-playbook playbooks/post_validation.yml
-```
-
-Once DNS has propagated, your GitHub Actions workflow will deploy to S3 on every push. You can trigger a deploy by committing any change and pushing to the configured branch.
-
-## Run
-```bash
-cd ansible
-ansible-playbook playbooks/site.yml
-```
-
-## Post-validation (ACM -> CloudFront)
-CloudFront can only accept custom aliases when the ACM certificate is `ISSUED` in `us-east-1`. The first run requests the cert and creates DNS validation records; once ACM finishes validation, run this playbook to attach the custom cert + aliases:
-```bash
-cd ansible
-ansible-playbook playbooks/post_validation.yml
-```
-
-## Destroy / Redeploy
-Destroy all enabled resources (force-deletes S3 objects):
-```bash
-cd ansible
-ansible-playbook playbooks/destroy.yml
-```
-
-Destroy then recreate in one step:
-```bash
-cd ansible
-ansible-playbook playbooks/redeploy.yml
-```
+## Notes
+- If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
+- If S3 deletion fails with `AccessDenied`, ensure `s3:ListBucketVersions` and `s3:DeleteObjectVersion` are included in the IAM policy.
