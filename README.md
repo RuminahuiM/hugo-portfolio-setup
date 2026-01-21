@@ -11,7 +11,7 @@ This repo includes an `ansible/` scaffold to provision:
 
 The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
 
-Edit `ansible/inventory/group_vars/all/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/inventory/group_vars/all.yml` keeps defaults.
+Edit `ansible/inventory/group_vars/all/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/inventory/group_vars/all/all.yml` keeps defaults.
 
 ## Prerequisites
 - Python 3 + pip
@@ -56,7 +56,9 @@ You need AWS credentials on the machine running Ansible. For this repo we use a 
         "s3:CreateBucket",
         "s3:DeleteBucket",
         "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
         "s3:ListBucket",
+        "s3:ListBucketVersions",
         "s3:GetBucketLocation",
         "s3:GetBucketPolicy",
         "s3:GetBucketWebsite",
@@ -193,7 +195,7 @@ When finished, delete the access key in IAM.
 
 Make sure the credentials have permissions for S3, ACM, Route 53, CloudFront, and IAM.
 
-ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all.yml`, and set your normal region in `ansible/inventory/group_vars/all/user.yml`.
+ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all/all.yml`, and set your normal region in `ansible/inventory/group_vars/all/user.yml`.
 
 ## Configure User Inputs
 Edit the user configuration file before running anything:

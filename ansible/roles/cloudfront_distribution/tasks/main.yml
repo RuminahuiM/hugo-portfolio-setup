@@ -174,5 +174,16 @@
             default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
             wait: false
           when:
+            - keep_acm | default(true)
             - cloudfront_distribution_id is defined
             - cloudfront_distribution_id | length > 0
+
+        - name: Ensure CloudFront distribution is absent
+          community.aws.cloudfront_distribution:
+            state: absent
+            caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
+            distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
+            wait: true
+            wait_timeout: "{{ cloudfront_wait_timeout | default(1800) }}"
+          when:
+            - not (keep_acm | default(true))
