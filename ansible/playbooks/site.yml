@@ -21,6 +21,12 @@
       ansible.builtin.set_fact:
         github_deployer_state: present
         github_oidc_provider_state: present
+    - name: Clear CloudFront identifiers for fresh create
+      ansible.builtin.set_fact:
+        cloudfront_distribution_id: ""
+        cloudfront_domain_name: ""
+      when:
+        - not keep_cloudfront
   roles:
     - role: s3_static_site
       when: s3_enabled
