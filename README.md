@@ -11,7 +11,7 @@ This repo includes an `ansible/` scaffold to provision:
 
 The S3 role also enables static website hosting using `s3_website_index` and `s3_website_error`.
 
-Edit `ansible/group_vars/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/group_vars/all.yml` keeps defaults.
+Edit `ansible/inventory/group_vars/all/user.yml` to set values and toggle `*_enabled` flags before running. `ansible/inventory/group_vars/all.yml` keeps defaults.
 
 ## Prerequisites
 - Python 3 + pip
@@ -193,11 +193,14 @@ When finished, delete the access key in IAM.
 
 Make sure the credentials have permissions for S3, ACM, Route 53, CloudFront, and IAM.
 
-ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/group_vars/all.yml`, and set your normal region in `ansible/group_vars/user.yml`.
+ACM certificates for CloudFront must be created in `us-east-1`, so the playbook uses a dedicated `acm_region` variable. Keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all.yml`, and set your normal region in `ansible/inventory/group_vars/all/user.yml`.
 
 ## Configure User Inputs
 Edit the user configuration file before running anything:
-`ansible/group_vars/user.yml`
+`ansible/inventory/group_vars/all/user.yml`
+
+If you're starting fresh, copy `ansible/inventory/group_vars/user.example.yml` to `ansible/inventory/group_vars/all/user.yml` and fill it in.
+`user.yml` is git-ignored so your local settings don't get committed.
 
 This is where you set:
 - `domain_name`
@@ -216,7 +219,7 @@ This is where you set:
   - `keep_iam_role` (default `false`)
 
 ## GitHub Deployer Role (OIDC)
-This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/group_vars/user.yml`:
+This repo can create a GitHub Actions OIDC role for deployments. Enable and configure it in `ansible/inventory/group_vars/all/user.yml`:
 ```yaml
 github_deployer_enabled: true
 github_account_name: "YOUR_GITHUB_NAME_OR_ORG"

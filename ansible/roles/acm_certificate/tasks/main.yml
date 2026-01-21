@@ -1,204 +1,184 @@
 ---
-- name: Look up ACM certificate by domain name
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - list-certificates
-      - --region
-      - "{{ acm_region }}"
-      - --query
-      - "CertificateSummaryList[?DomainName=='{{ acm_domain_name }}'].CertificateArn | [0]"
-      - --output
-      - text
-  register: acm_lookup
-  changed_when: false
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
+- name: Manage ACM certificate
+  when: acm_enabled
+  block:
+    - name: Ensure ACM certificate is present
+      when: (acm_state | default('present')) == 'present'
+      block:
+        - name: Look up ACM certificate by domain name
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - list-certificates
+              - --region
+              - "{{ acm_region }}"
+              - --query
+              - "CertificateSummaryList[?DomainName=='{{ acm_domain_name }}'].CertificateArn | [0]"
+              - --output
+              - text
+          register: acm_lookup
+          changed_when: false
 
-- name: Store ACM certificate ARN when found
-  ansible.builtin.set_fact:
-    acm_certificate_arn: "{{ acm_lookup.stdout }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_lookup.stdout is defined
-    - acm_lookup.stdout != "None"
+        - name: Store ACM certificate ARN when found
+          ansible.builtin.set_fact:
+            acm_certificate_arn: "{{ acm_lookup.stdout }}"
+          when:
+            - acm_lookup.stdout is defined
+            - acm_lookup.stdout != "None"
 
-- name: Request ACM certificate with subject alternative names
-  ansible.builtin.command:
-    argv: >-
-      {{
-        [
-          'aws', 'acm', 'request-certificate',
-          '--region', acm_region,
-          '--domain-name', acm_domain_name,
-          '--validation-method', acm_validation_method,
-          '--subject-alternative-names'
-        ] + acm_subject_alternative_names
-      }}
-  register: acm_request_sans
-  changed_when: true
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - (acm_certificate_arn | default('')) == ''
-    - acm_subject_alternative_names | length > 0
+        - name: Request ACM certificate with subject alternative names
+          ansible.builtin.command:
+            argv: >-
+              {{
+                [
+                  'aws', 'acm', 'request-certificate',
+                  '--region', acm_region,
+                  '--domain-name', acm_domain_name,
+                  '--validation-method', acm_validation_method,
+                  '--subject-alternative-names'
+                ] + acm_subject_alternative_names
+              }}
+          register: acm_request_sans
+          changed_when: true
+          when:
+            - (acm_certificate_arn | default('')) == ''
+            - acm_subject_alternative_names | length > 0
 
-- name: Request ACM certificate without subject alternative names
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - request-certificate
-      - --region
-      - "{{ acm_region }}"
-      - --domain-name
-      - "{{ acm_domain_name }}"
-      - --validation-method
-      - "{{ acm_validation_method }}"
-  register: acm_request_base
-  changed_when: true
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - (acm_certificate_arn | default('')) == ''
-    - acm_subject_alternative_names | length == 0
+        - name: Request ACM certificate without subject alternative names
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - request-certificate
+              - --region
+              - "{{ acm_region }}"
+              - --domain-name
+              - "{{ acm_domain_name }}"
+              - --validation-method
+              - "{{ acm_validation_method }}"
+          register: acm_request_base
+          changed_when: true
+          when:
+            - (acm_certificate_arn | default('')) == ''
+            - acm_subject_alternative_names | length == 0
 
-- name: Store ACM certificate ARN from request (SANs)
-  ansible.builtin.set_fact:
-    acm_certificate_arn: "{{ (acm_request_sans.stdout | from_json).CertificateArn }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_request_sans is defined
-    - acm_request_sans.stdout is defined
+        - name: Store ACM certificate ARN from request (SANs)
+          ansible.builtin.set_fact:
+            acm_certificate_arn: "{{ (acm_request_sans.stdout | from_json).CertificateArn }}"
+          when:
+            - acm_request_sans is defined
+            - acm_request_sans.stdout is defined
 
-- name: Store ACM certificate ARN from request (base only)
-  ansible.builtin.set_fact:
-    acm_certificate_arn: "{{ (acm_request_base.stdout | from_json).CertificateArn }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_request_base is defined
-    - acm_request_base.stdout is defined
+        - name: Store ACM certificate ARN from request (base only)
+          ansible.builtin.set_fact:
+            acm_certificate_arn: "{{ (acm_request_base.stdout | from_json).CertificateArn }}"
+          when:
+            - acm_request_base is defined
+            - acm_request_base.stdout is defined
 
-- name: Fetch ACM validation records
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - describe-certificate
-      - --region
-      - "{{ acm_region }}"
-      - --certificate-arn
-      - "{{ acm_certificate_arn }}"
-      - --query
-      - "Certificate.DomainValidationOptions[].ResourceRecord"
-      - --output
-      - json
-  register: acm_validation
-  changed_when: false
-  retries: 10
-  delay: 3
-  until: >-
-    (acm_validation.stdout | default('[]', true) | from_json | default([], true) | length) > 0
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_certificate_arn is defined
-    - acm_certificate_arn | length > 0
+        - name: Fetch ACM validation records
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - describe-certificate
+              - --region
+              - "{{ acm_region }}"
+              - --certificate-arn
+              - "{{ acm_certificate_arn }}"
+              - --query
+              - "Certificate.DomainValidationOptions[].ResourceRecord"
+              - --output
+              - json
+          register: acm_validation
+          changed_when: false
+          retries: 10
+          delay: 3
+          until: >-
+            (acm_validation.stdout | default('[]', true) | from_json | default([], true) | length) > 0
+          when:
+            - acm_certificate_arn is defined
+            - acm_certificate_arn | length > 0
 
-- name: Store ACM validation records
-  ansible.builtin.set_fact:
-    acm_validation_records: "{{ (acm_validation.stdout | default('[]', true) | from_json | default([], true)) }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_validation.stdout is defined
+        - name: Store ACM validation records
+          ansible.builtin.set_fact:
+            acm_validation_records: "{{ (acm_validation.stdout | default('[]', true) | from_json | default([], true)) }}"
+          when:
+            - acm_validation.stdout is defined
 
-- name: Fetch ACM certificate status
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - describe-certificate
-      - --region
-      - "{{ acm_region }}"
-      - --certificate-arn
-      - "{{ acm_certificate_arn }}"
-      - --query
-      - "Certificate.Status"
-      - --output
-      - text
-  register: acm_status
-  changed_when: false
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_certificate_arn is defined
-    - acm_certificate_arn | length > 0
+        - name: Fetch ACM certificate status
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - describe-certificate
+              - --region
+              - "{{ acm_region }}"
+              - --certificate-arn
+              - "{{ acm_certificate_arn }}"
+              - --query
+              - "Certificate.Status"
+              - --output
+              - text
+          register: acm_status
+          changed_when: false
+          when:
+            - acm_certificate_arn is defined
+            - acm_certificate_arn | length > 0
 
-- name: Store ACM certificate status
-  ansible.builtin.set_fact:
-    acm_certificate_status: "{{ acm_status.stdout }}"
-    acm_certificate_ready: "{{ acm_status.stdout == 'ISSUED' }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_status.stdout is defined
+        - name: Store ACM certificate status
+          ansible.builtin.set_fact:
+            acm_certificate_status: "{{ acm_status.stdout }}"
+            acm_certificate_ready: "{{ acm_status.stdout == 'ISSUED' }}"
+          when:
+            - acm_status.stdout is defined
 
-- name: Create ACM DNS validation records in Route 53
-  amazon.aws.route53:
-    zone: "{{ route53_zone_name }}"
-    record: "{{ item.Name }}"
-    type: "{{ item.Type }}"
-    ttl: 300
-    state: present
-    value: "{{ item.Value }}"
-    overwrite: true
-    private_zone: "{{ route53_private_zone }}"
-  loop: "{{ acm_validation_records }}"
-  when:
-    - acm_enabled
-    - route53_enabled
-    - (acm_state | default('present')) == 'present'
-    - acm_validation_records is defined
-    - acm_validation_records | length > 0
+        - name: Create ACM DNS validation records in Route 53
+          amazon.aws.route53:
+            zone: "{{ route53_zone_name }}"
+            record: "{{ item.Name }}"
+            type: "{{ item.Type }}"
+            ttl: 300
+            state: present
+            value: "{{ item.Value }}"
+            overwrite: true
+            private_zone: "{{ route53_private_zone }}"
+          loop: "{{ acm_validation_records }}"
+          when:
+            - route53_enabled
+            - acm_validation_records is defined
+            - acm_validation_records | length > 0
 
+    - name: Remove ACM certificates
+      when: (acm_state | default('present')) == 'absent'
+      block:
+        - name: List ACM certificates for deletion
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - list-certificates
+              - --region
+              - "{{ acm_region }}"
+              - --query
+              - "CertificateSummaryList[?DomainName=='{{ acm_domain_name }}'].CertificateArn"
+              - --output
+              - text
+          register: acm_delete_list
+          changed_when: false
 
-- name: List ACM certificates for deletion
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - list-certificates
-      - --region
-      - "{{ acm_region }}"
-      - --query
-      - "CertificateSummaryList[?DomainName=='{{ acm_domain_name }}'].CertificateArn"
-      - --output
-      - text
-  register: acm_delete_list
-  changed_when: false
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'absent'
-
-- name: Delete ACM certificates
-  ansible.builtin.command:
-    argv:
-      - aws
-      - acm
-      - delete-certificate
-      - --region
-      - "{{ acm_region }}"
-      - --certificate-arn
-      - "{{ item }}"
-  loop: "{{ acm_delete_list.stdout.split() }}"
-  when:
-    - acm_enabled
-    - (acm_state | default('present')) == 'absent'
-    - acm_delete_list.stdout is defined
-    - acm_delete_list.stdout | length > 0
+        - name: Delete ACM certificates
+          ansible.builtin.command:
+            argv:
+              - aws
+              - acm
+              - delete-certificate
+              - --region
+              - "{{ acm_region }}"
+              - --certificate-arn
+              - "{{ item }}"
+          loop: "{{ acm_delete_list.stdout.split() }}"
+          when:
+            - acm_delete_list.stdout is defined
+            - acm_delete_list.stdout | length > 0

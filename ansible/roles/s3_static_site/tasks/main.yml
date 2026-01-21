@@ -1,44 +1,39 @@
 ---
-- name: Ensure S3 bucket is present
-  amazon.aws.s3_bucket:
-    name: "{{ s3_bucket_name }}"
-    state: present
-    region: "{{ aws_region }}"
-    tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
-  when:
-    - s3_enabled
-    - (s3_state | default('present')) == 'present'
+- name: Manage S3 bucket
+  when: s3_enabled
+  block:
+    - name: Create S3 bucket
+      amazon.aws.s3_bucket:
+        name: "{{ s3_bucket_name }}"
+        state: present
+        region: "{{ aws_region }}"
+        tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
+      when: (s3_state | default('present')) == 'present'
 
-- name: Ensure S3 bucket is absent
-  ansible.builtin.command:
-    argv:
-      - aws
-      - s3
-      - rm
-      - "s3://{{ s3_bucket_name }}"
-      - --recursive
-  register: s3_empty_result
-  changed_when: false
-  failed_when: false
-  when:
-    - s3_enabled
-    - (s3_state | default('present')) == 'absent'
+    - name: Placeholder for bucket policy and access configuration
+      ansible.builtin.debug:
+        msg:
+          - "TODO: attach bucket policy or CloudFront OAC permissions"
+          - "TODO: decide public access block settings"
+      when: (s3_state | default('present')) == 'present'
 
-- name: Ensure S3 bucket is absent
-  amazon.aws.s3_bucket:
-    name: "{{ s3_bucket_name }}"
-    state: absent
-    region: "{{ aws_region }}"
-    force: "{{ s3_force_destroy | default(false) }}"
-  when:
-    - s3_enabled
-    - (s3_state | default('present')) == 'absent'
+    - name: Remove S3 bucket contents
+      ansible.builtin.command:
+        argv:
+          - aws
+          - s3
+          - rm
+          - "s3://{{ s3_bucket_name }}"
+          - --recursive
+      register: s3_empty_result
+      changed_when: false
+      failed_when: false
+      when: (s3_state | default('present')) == 'absent'
 
-- name: Placeholder for bucket policy and access configuration
-  ansible.builtin.debug:
-    msg:
-      - "TODO: attach bucket policy or CloudFront OAC permissions"
-      - "TODO: decide public access block settings"
-  when:
-    - s3_enabled
-    - (s3_state | default('present')) == 'present'
+    - name: Delete S3 bucket
+      amazon.aws.s3_bucket:
+        name: "{{ s3_bucket_name }}"
+        state: absent
+        region: "{{ aws_region }}"
+        force: "{{ s3_force_destroy | default(false) }}"
+      when: (s3_state | default('present')) == 'absent'

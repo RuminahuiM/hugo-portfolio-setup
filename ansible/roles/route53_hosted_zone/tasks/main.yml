@@ -1,46 +1,37 @@
 ---
-- name: Create Route 53 hosted zone
-  amazon.aws.route53_zone:
-    zone: "{{ route53_zone_name }}"
-    comment: "{{ route53_comment }}"
-    state: "{{ route53_state | default('present') }}"
-    vpc_id: "{{ route53_vpc_id if route53_private_zone else omit }}"
-    vpc_region: "{{ route53_vpc_region if route53_private_zone else omit }}"
-    tags: "{{ common_tags }}"
-  register: route53_zone_result
+- name: Manage Route 53 hosted zone
   when: route53_enabled
+  block:
+    - name: Create Route 53 hosted zone
+      amazon.aws.route53_zone:
+        zone: "{{ route53_zone_name }}"
+        comment: "{{ route53_comment }}"
+        state: "{{ route53_state | default('present') }}"
+        vpc_id: "{{ route53_vpc_id if route53_private_zone else omit }}"
+        vpc_region: "{{ route53_vpc_region if route53_private_zone else omit }}"
+        tags: "{{ common_tags }}"
+      register: route53_zone_result
 
-- name: Store Route 53 hosted zone id
-  ansible.builtin.set_fact:
-    route53_zone_id: "{{ route53_zone_result.zone_id }}"
-  when:
-    - route53_enabled
-    - route53_zone_result.zone_id is defined
+    - name: Store Route 53 hosted zone id
+      ansible.builtin.set_fact:
+        route53_zone_id: "{{ route53_zone_result.zone_id }}"
+      when: route53_zone_result.zone_id is defined
 
-- name: Lookup Route 53 name servers
-  ansible.builtin.command:
-    argv:
-      - aws
-      - route53
-      - get-hosted-zone
-      - --id
-      - "{{ route53_zone_id }}"
-      - --query
-      - "DelegationSet.NameServers"
-      - --output
-      - json
-  register: route53_name_servers_lookup
-  changed_when: false
-  when:
-    - route53_enabled
-    - (route53_state | default('present')) == 'present'
-    - route53_zone_id is defined
+    - name: Lookup Route 53 hosted zone details
+      amazon.aws.route53_info:
+        query: hosted_zone
+        hosted_zone_method: details
+        hosted_zone_id: "{{ route53_zone_id }}"
+      register: route53_zone_details
+      when:
+        - (route53_state | default('present')) == 'present'
+        - route53_zone_id is defined
 
-- name: Store Route 53 name servers
-  ansible.builtin.set_fact:
-    route53_name_servers: "{{ route53_name_servers_lookup.stdout | from_json }}"
-  when:
-    - route53_enabled
-    - (route53_state | default('present')) == 'present'
-    - route53_name_servers_lookup.stdout is defined
-    - route53_name_servers_lookup.stdout | length > 0
+    - name: Store Route 53 name servers
+      ansible.builtin.set_fact:
+        route53_name_servers: "{{ route53_zone_details.DelegationSet.NameServers }}"
+      when:
+        - (route53_state | default('present')) == 'present'
+        - route53_zone_details.DelegationSet is defined
+        - route53_zone_details.DelegationSet.NameServers is defined
+        - route53_zone_details.DelegationSet.NameServers | length > 0

@@ -1,212 +1,178 @@
 ---
-- name: Lookup CloudFront distribution id by primary alias
-  ansible.builtin.command:
-    argv:
-      - aws
-      - cloudfront
-      - list-distributions
-      - --query
-      - >-
-        DistributionList.Items[?Aliases.Quantity > `0` && contains(Aliases.Items, '{{ cloudfront_aliases | first }}')].Id | [0]
-      - --output
-      - text
-  register: cloudfront_alias_lookup
-  changed_when: false
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (cloudfront_distribution_id | default('')) == ''
-    - cloudfront_aliases is defined
-    - cloudfront_aliases | length > 0
+- name: Manage CloudFront distribution
+  when: cloudfront_enabled
+  block:
+    - name: Ensure CloudFront distribution is present
+      when: (cloudfront_state | default('present')) == 'present'
+      block:
+        - name: Lookup CloudFront distribution id by primary alias
+          ansible.builtin.command:
+            argv:
+              - aws
+              - cloudfront
+              - list-distributions
+              - --query
+              - >-
+                DistributionList.Items[?Aliases.Quantity > `0` && contains(Aliases.Items, '{{ cloudfront_aliases | first }}')].Id | [0]
+              - --output
+              - text
+          register: cloudfront_alias_lookup
+          changed_when: false
+          when:
+            - (cloudfront_distribution_id | default('')) == ''
+            - cloudfront_aliases is defined
+            - cloudfront_aliases | length > 0
 
-- name: Store CloudFront distribution id from alias lookup
-  ansible.builtin.set_fact:
-    cloudfront_distribution_id: "{{ cloudfront_alias_lookup.stdout }}"
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (cloudfront_distribution_id | default('')) == ''
-    - cloudfront_alias_lookup.stdout is defined
-    - cloudfront_alias_lookup.stdout != "None"
+        - name: Store CloudFront distribution id from alias lookup
+          ansible.builtin.set_fact:
+            cloudfront_distribution_id: "{{ cloudfront_alias_lookup.stdout }}"
+          when:
+            - (cloudfront_distribution_id | default('')) == ''
+            - cloudfront_alias_lookup.stdout is defined
+            - cloudfront_alias_lookup.stdout != "None"
 
-- name: Select CloudFront aliases and certificate
-  ansible.builtin.set_fact:
-    cloudfront_effective_aliases: "{{ cloudfront_aliases if cloudfront_use_custom_certificate else [] }}"
-    cloudfront_effective_viewer_certificate: >-
-      {{
-        cloudfront_viewer_certificate | combine({ 'cloudfront_default_certificate': false })
-        if cloudfront_use_custom_certificate
-        else { 'cloudfront_default_certificate': true }
-      }}
-  vars:
-    cloudfront_use_custom_certificate: >-
-      {{
-        (acm_certificate_ready | default(true))
-        if (acm_enabled | default(false))
-        else true
-      }}
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
+        - name: Select CloudFront aliases and certificate
+          ansible.builtin.set_fact:
+            cloudfront_effective_aliases: "{{ cloudfront_aliases if cloudfront_use_custom_certificate else [] }}"
+            cloudfront_effective_viewer_certificate: >-
+              {{
+                cloudfront_viewer_certificate | combine({ 'cloudfront_default_certificate': false })
+                if cloudfront_use_custom_certificate
+                else { 'cloudfront_default_certificate': true }
+              }}
+          vars:
+            cloudfront_use_custom_certificate: >-
+              {{
+                (acm_certificate_ready | default(true))
+                if (acm_enabled | default(false))
+                else true
+              }}
 
-- name: Ensure CloudFront distribution is present
-  community.aws.cloudfront_distribution:
-    state: present
-    caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
-    distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
-    comment: "{{ cloudfront_comment }}"
-    enabled: true
-    default_root_object: "{{ cloudfront_default_root_object }}"
-    price_class: "{{ cloudfront_price_class }}"
-    aliases: "{{ cloudfront_effective_aliases }}"
-    origins: "{{ cloudfront_origins }}"
-    default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
-    viewer_certificate: "{{ cloudfront_effective_viewer_certificate }}"
-    tags: "{{ common_tags }}"
-  register: cloudfront_result
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
+        - name: Ensure CloudFront distribution is present
+          community.aws.cloudfront_distribution:
+            state: present
+            caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
+            distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
+            comment: "{{ cloudfront_comment }}"
+            enabled: true
+            default_root_object: "{{ cloudfront_default_root_object }}"
+            price_class: "{{ cloudfront_price_class }}"
+            aliases: "{{ cloudfront_effective_aliases }}"
+            origins: "{{ cloudfront_origins }}"
+            default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
+            viewer_certificate: "{{ cloudfront_effective_viewer_certificate }}"
+            tags: "{{ common_tags }}"
+          register: cloudfront_result
 
-- name: Store CloudFront domain name
-  ansible.builtin.set_fact:
-    cloudfront_domain_name: "{{ cloudfront_result.domain_name }}"
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - cloudfront_result.domain_name is defined
+        - name: Store CloudFront domain name
+          ansible.builtin.set_fact:
+            cloudfront_domain_name: "{{ cloudfront_result.domain_name }}"
+          when: cloudfront_result.domain_name is defined
 
-- name: Store CloudFront distribution id
-  ansible.builtin.set_fact:
-    cloudfront_distribution_id: "{{ cloudfront_result.id }}"
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - cloudfront_result.id is defined
+        - name: Store CloudFront distribution id
+          ansible.builtin.set_fact:
+            cloudfront_distribution_id: "{{ cloudfront_result.id }}"
+          when: cloudfront_result.id is defined
 
-- name: Lookup CloudFront distribution id for deletion
-  ansible.builtin.command:
-    argv:
-      - aws
-      - cloudfront
-      - list-distributions
-      - --query
-      - "DistributionList.Items[?Comment=='{{ cloudfront_comment }}'].Id | [0]"
-      - --output
-      - text
-  register: cloudfront_id_lookup
-  changed_when: false
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'absent'
-    - (cloudfront_distribution_id | default('')) == ''
+        - name: Extract CloudFront origin access identity
+          ansible.builtin.set_fact:
+            cloudfront_oai_path: >-
+              {{
+                (cloudfront_result.origins['items'] | default([]) | first | default({}))
+                  .get('s3_origin_config', {})
+                  .get('origin_access_identity', '')
+              }}
+          when:
+            - s3_enabled
+            - (s3_state | default('present')) == 'present'
 
-- name: Store CloudFront distribution id for deletion
-  ansible.builtin.set_fact:
-    cloudfront_distribution_id: "{{ cloudfront_id_lookup.stdout }}"
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'absent'
-    - (cloudfront_distribution_id | default('')) == ''
-    - cloudfront_id_lookup.stdout is defined
-    - cloudfront_id_lookup.stdout != "None"
+        - name: Build CloudFront origin access identity ARN
+          ansible.builtin.set_fact:
+            cloudfront_oai_id: "{{ cloudfront_oai_path.split('/')[-1] }}"
+            cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_path.split('/')[-1] }}"
+          when:
+            - s3_enabled
+            - (s3_state | default('present')) == 'present'
 
-- name: Disable CloudFront distribution before deletion
-  community.aws.cloudfront_distribution:
-    state: present
-    distribution_id: "{{ cloudfront_distribution_id }}"
-    enabled: false
-    comment: "{{ cloudfront_comment }}"
-    default_root_object: "{{ cloudfront_default_root_object }}"
-    price_class: "{{ cloudfront_price_class }}"
-    aliases: []
-    origins: "{{ cloudfront_origins }}"
-    default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
-    wait: true
-    wait_timeout: "{{ cloudfront_wait_timeout | default(1800) }}"
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'absent'
-    - cloudfront_distribution_id is defined
-    - cloudfront_distribution_id | length > 0
+        - name: Ensure CloudFront origin access identity is configured
+          ansible.builtin.assert:
+            that:
+              - cloudfront_oai_path != ""
+            fail_msg: "CloudFront origin access identity not found; set s3_origin_access_identity_enabled: true for the S3 origin."
+          when:
+            - s3_enabled
+            - (s3_state | default('present')) == 'present'
 
-- name: Ensure CloudFront distribution is absent
-  community.aws.cloudfront_distribution:
-    state: absent
-    caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
-    distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
-    wait: true
-  when:
-    - cloudfront_enabled
-    - (cloudfront_state | default('present')) == 'absent'
+        - name: Build S3 bucket policy for CloudFront
+          ansible.builtin.set_fact:
+            s3_cloudfront_policy: "{{ s3_cloudfront_policy_doc | to_json }}"
+          vars:
+            s3_cloudfront_policy_doc:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: "AllowCloudFrontOriginAccessIdentityReadOnly"
+                  Effect: "Allow"
+                  Principal:
+                    AWS: "{{ cloudfront_oai_arn }}"
+                  Action:
+                    - "s3:GetObject"
+                  Resource: "arn:aws:s3:::{{ s3_bucket_name }}/*"
+          when:
+            - s3_enabled
+            - (s3_state | default('present')) == 'present'
 
-- name: Extract CloudFront origin access identity
-  ansible.builtin.set_fact:
-    cloudfront_oai_path: >-
-      {{
-        (cloudfront_result.origins['items'] | default([]) | first | default({}))
-          .get('s3_origin_config', {})
-          .get('origin_access_identity', '')
-      }}
-  when:
-    - cloudfront_enabled
-    - s3_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (s3_state | default('present')) == 'present'
+        - name: Apply S3 bucket policy for CloudFront
+          amazon.aws.s3_bucket:
+            name: "{{ s3_bucket_name }}"
+            state: present
+            region: "{{ aws_region }}"
+            policy: "{{ s3_cloudfront_policy }}"
+          register: s3_policy_result
+          retries: "{{ s3_policy_retries | default(18) }}"
+          delay: "{{ s3_policy_delay | default(10) }}"
+          until: s3_policy_result is succeeded
+          when:
+            - s3_enabled
+            - (s3_state | default('present')) == 'present'
 
-- name: Build CloudFront origin access identity ARN
-  ansible.builtin.set_fact:
-    cloudfront_oai_id: "{{ cloudfront_oai_path.split('/')[-1] }}"
-    cloudfront_oai_arn: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {{ cloudfront_oai_path.split('/')[-1] }}"
-  when:
-    - cloudfront_enabled
-    - s3_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (s3_state | default('present')) == 'present'
+    - name: Disable CloudFront distribution
+      when: (cloudfront_state | default('present')) == 'absent'
+      block:
+        - name: Lookup CloudFront distribution id for disable
+          ansible.builtin.command:
+            argv:
+              - aws
+              - cloudfront
+              - list-distributions
+              - --query
+              - "DistributionList.Items[?Comment=='{{ cloudfront_comment }}'].Id | [0]"
+              - --output
+              - text
+          register: cloudfront_id_lookup
+          changed_when: false
+          when:
+            - (cloudfront_distribution_id | default('')) == ''
 
-- name: Ensure CloudFront origin access identity is configured
-  ansible.builtin.assert:
-    that:
-      - cloudfront_oai_path != ""
-    fail_msg: "CloudFront origin access identity not found; set s3_origin_access_identity_enabled: true for the S3 origin."
-  when:
-    - cloudfront_enabled
-    - s3_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (s3_state | default('present')) == 'present'
+        - name: Store CloudFront distribution id for disable
+          ansible.builtin.set_fact:
+            cloudfront_distribution_id: "{{ cloudfront_id_lookup.stdout }}"
+          when:
+            - (cloudfront_distribution_id | default('')) == ''
+            - cloudfront_id_lookup.stdout is defined
+            - cloudfront_id_lookup.stdout != "None"
 
-- name: Build S3 bucket policy for CloudFront
-  ansible.builtin.set_fact:
-    s3_cloudfront_policy: "{{ s3_cloudfront_policy_doc | to_json }}"
-  vars:
-    s3_cloudfront_policy_doc:
-      Version: "2012-10-17"
-      Statement:
-        - Sid: "AllowCloudFrontOriginAccessIdentityReadOnly"
-          Effect: "Allow"
-          Principal:
-            AWS: "{{ cloudfront_oai_arn }}"
-          Action:
-            - "s3:GetObject"
-          Resource: "arn:aws:s3:::{{ s3_bucket_name }}/*"
-  when:
-    - cloudfront_enabled
-    - s3_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (s3_state | default('present')) == 'present'
-
-- name: Apply S3 bucket policy for CloudFront
-  amazon.aws.s3_bucket:
-    name: "{{ s3_bucket_name }}"
-    state: present
-    region: "{{ aws_region }}"
-    policy: "{{ s3_cloudfront_policy }}"
-  register: s3_policy_result
-  retries: "{{ s3_policy_retries | default(18) }}"
-  delay: "{{ s3_policy_delay | default(10) }}"
-  until: s3_policy_result is succeeded
-  when:
-    - cloudfront_enabled
-    - s3_enabled
-    - (cloudfront_state | default('present')) == 'present'
-    - (s3_state | default('present')) == 'present'
+        - name: Disable CloudFront distribution
+          community.aws.cloudfront_distribution:
+            state: present
+            distribution_id: "{{ cloudfront_distribution_id }}"
+            enabled: false
+            comment: "{{ cloudfront_comment }}"
+            default_root_object: "{{ cloudfront_default_root_object }}"
+            price_class: "{{ cloudfront_price_class }}"
+            aliases: []
+            origins: "{{ cloudfront_origins }}"
+            default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
+            wait: false
+          when:
+            - cloudfront_distribution_id is defined
+            - cloudfront_distribution_id | length > 0

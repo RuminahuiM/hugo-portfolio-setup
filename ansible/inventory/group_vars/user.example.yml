@@ -1,6 +1,6 @@
 ---
 project_name: "hugo-portfolio"
-domain_name: "ruminahui.ch"
+domain_name: "example.com"
 
 aws_region: "eu-north-1"
 bucket_subdomain: "www"
@@ -15,7 +15,7 @@ keep_iam_role: false
 common_tags:
   Project: "HugoPortfolioHosting"
 
-github_deployer_enabled: true
-github_account_name: "RuminahuiM"
-github_repo_name: "portfolio"
-github_repo_branch: "test-s3upload01"
+github_deployer_enabled: false
+github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
+github_repo_name: "YOUR_REPO"
+github_repo_branch: "main"

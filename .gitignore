@@ -4,3 +4,4 @@ __pycache__/
 *.retry
 .ansible/
 ansible/collections/
+ansible/inventory/group_vars/all/user.yml

@@ -2,9 +2,6 @@
 - name: Finalize CloudFront after ACM validation
   hosts: all
   gather_facts: false
-  vars_files:
-    - ../group_vars/all.yml
-    - ../group_vars/user.yml
   vars:
     acm_state: present
     cloudfront_state: present
