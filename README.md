@@ -1,12 +1,19 @@
 # hugo-portfolio-setup
-Provision a Hugo portfolio stack on AWS with Ansible:
-- S3 bucket (site origin)
-- ACM certificate (us-east-1 for CloudFront)
-- Route 53 hosted zone + records
-- CloudFront distribution
-- Optional GitHub Actions OIDC deployer role
+This project provides a full, reproducible workflow for hosting a Hugo portfolio on AWS (S3 + CloudFront + Route 53 + ACM) and deploying updates via GitHub Actions.
 
-Note: S3 website hosting/public access settings are not enabled yet (see the TODO in the S3 role).
+## What this provisions
+- S3 bucket (site origin)
+- CloudFront distribution (CDN)
+- ACM certificate in us-east-1 (required for CloudFront)
+- Route 53 hosted zone and DNS records
+- GitHub Actions OIDC deployer role
+
+Note: S3 website hosting and public access are not enabled. CloudFront accesses S3 using a private origin identity.
+
+## Repository layout
+- `ansible/`: Infrastructure provisioning and teardown.
+- `hugo-site/`: Hugo site source. Edit content and config here.
+- `.github/workflows/`: GitHub Actions for S3 deployment and optional theme maintenance.
 
 ## Quick overview (initial deployment flow)
 1) Buy a domain from a registrar (you will point it to Route 53 later).
@@ -15,11 +22,11 @@ Note: S3 website hosting/public access settings are not enabled yet (see the TOD
 4) Update your domain registrar with the Route 53 name servers the playbook prints.
 5) Wait for ACM validation (DNS) to complete.
 6) Run `ansible-playbook playbooks/post_validation.yml` to attach the cert and aliases to CloudFront.
-7) Push to your GitHub repo to trigger GitHub Actions to deploy to S3 (default workflow).
+7) Push to your GitHub repo to trigger GitHub Actions to deploy to S3.
 8) After DNS propagation, your Hugo site will be reachable at your domain.
 
 ## Prerequisites
-All commands below are run in a terminal on the machine that will run Ansible.
+All commands below run in a terminal on the machine that will run Ansible.
 
 Required tools:
 - Python 3 + pip
@@ -53,6 +60,7 @@ You need AWS credentials on the machine running Ansible. Use an IAM user with ac
 1) AWS Console -> IAM -> Users -> Create user.
 2) Do not enable AWS Management Console access (CLI only).
 3) Attach permissions for S3, ACM, Route 53, CloudFront, and IAM (or temporary `AdministratorAccess` while testing).
+   This IAM user is meant for one-time setup. After deployment, deactivate or delete the access key (or the user) in IAM.
 
 Permissions policy for the user (click to expand):
 <details>
@@ -206,13 +214,11 @@ aws sts get-caller-identity
 
 ACM certificates for CloudFront must be created in `us-east-1`, so keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all/all.yml`.
 
-Security note: this IAM user is meant for one-time setup. After deployment, deactivate or delete the access key (or the user) in IAM.
-
 ## Configure user inputs
 Defaults live in `ansible/inventory/group_vars/all/all.yml`.
 Your overrides live in `ansible/inventory/group_vars/all/user.yml`.
 
-If you are starting fresh, run this command to copy the example file into the correct location:
+If you are starting fresh, copy the example file into the correct location:
 ```bash
 cp ansible/inventory/group_vars/user.example.yml ansible/inventory/group_vars/all/user.yml
 ```
@@ -223,14 +229,18 @@ Common settings (plain English):
 - `domain_name`: your root domain, e.g. `example.com`.
 - `aws_region`: region for S3 and Route 53 resources, e.g. `eu-north-1`.
 - `bucket_subdomain`: usually `www` so the bucket becomes `www.domain_name`.
-- `github_*`: settings for GitHub Actions OIDC (optional).
+- `github_*`: settings for GitHub Actions OIDC (required).
+
+## Branch workflow - Recomendation
+Keep `main` as the default template branch. Create a separate branch (for example `public`) where you edit your content and configuration.
+Set `DEPLOY_BRANCH` to that branch, and push updates there to trigger deployment.
 
 ## Hugo site source
 The Hugo site lives in `hugo-site/`. Edit content/config there, commit, and push.
 GitHub Actions workflows live in `.github/workflows/` and build the site from `hugo-site/`.
 
-Keep flags (used by `destroy.yml` and `redeploy.yml`):
-- These flags control what gets deleted during destroy/redeploy.
+## Keep flags (redeploy and destroy)
+Keep flags control what gets deleted during destroy/redeploy.
 - `true` means keep the existing resource.
 - `false` means delete and recreate that resource.
 
@@ -261,11 +271,11 @@ The playbook prints:
 - GitHub Actions repository variables to set.
 - Route 53 name servers for your hosted zone.
 
-Update your domains registrar to use the printed Route 53 name servers (DNS propagation can take minutes to hours).
+Update your domain registrar to use the printed Route 53 name servers (DNS propagation can take minutes to hours).
 
 Set GitHub repository variables:
 1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
-2) Add the variables printed by the playbook:
+2) Add the variables printed by the playbook (all are required for deployments):
    - `AWS_REGION`
    - `HUGO_VERSION` (for example `0.123.8`)
    - `DEPLOY_BRANCH`
@@ -282,6 +292,10 @@ cd ansible
 ansible-playbook playbooks/post_validation.yml
 ```
 
+## Deploy the site
+Push changes to your repo on the branch named in `DEPLOY_BRANCH`.
+The workflow only runs when the branch name matches.
+
 ## Redeploy and destroy use cases
 All commands run from `ansible/`.
 
@@ -296,7 +310,7 @@ Full redeploy (also recreates ACM and Route 53):
 ansible-playbook playbooks/redeploy.yml -e '{"keep_acm": false, "keep_route53": false}'
 ```
 Use this only if you want a brand new certificate and hosted zone.
-Note: recreating the hosted zone changes name servers, so you must update the registrar again. You will have to wait for DNS propagation and Certificate validation again. Afterwards run the post_validation playbook again.
+Note: recreating the hosted zone changes name servers, so you must update the registrar again. You will have to wait for DNS propagation and certificate validation again. Afterwards run the post_validation playbook again.
 
 Destroy only (uses keep flags in `user.yml`):
 ```bash
@@ -319,13 +333,23 @@ github_repo_name: "YOUR_REPO"
 github_repo_branch: "main"
 ```
 
-This is only needed if you want GitHub Actions to deploy to S3.
 The role grants:
 - S3 sync permissions to `github_deployer_s3_bucket_name`.
 - CloudFront invalidation for `github_deployer_cloudfront_distribution_id` (if set).
 
 Make sure `github_repo_branch` matches `DEPLOY_BRANCH`, otherwise OIDC assumes a different branch than the workflow uses.
 
-## Notes
+If you change `github_account_name`, `github_repo_name`, or `github_repo_branch`, redeploy the GitHub role:
+```bash
+ansible-playbook playbooks/redeploy.yml -e '{"keep_s3": true, "keep_cloudfront": true, "keep_acm": true, "keep_route53": true, "keep_iam_role": true, "keep_github_deployer": false}'
+```
+
+## Operational notes
 - If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
 - If S3 deletion fails with `AccessDenied`, ensure `s3:ListBucketVersions` and `s3:DeleteObjectVersion` are included in the IAM policy.
+
+## Troubleshooting
+- OIDC assume role fails: verify `github_account_name`, `github_repo_name`, and `github_repo_branch` in `user.yml` match the GitHub repo and branch exactly (case sensitive). Then redeploy the GitHub role.
+- Artifact upload fails with `Zone.Identifier`: remove the file and ensure `*:Zone.Identifier` is in `.gitignore`.
+- CloudFront delete takes a long time: AWS can take several minutes to disable and remove a distribution.
+- Certificate not attached: wait for ACM status `ISSUED`, then run `playbooks/post_validation.yml`.
