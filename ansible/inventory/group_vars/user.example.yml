@@ -15,7 +15,7 @@ keep_iam_role: false
 common_tags:
   Project: "{{ project_name }}"
 
-github_deployer_enabled: false
+github_deployer_enabled: true
 github_account_name: "YOUR_GITHUB_NAME_OR_ORG"
 github_repo_name: "YOUR_REPO"
 github_repo_branch: "main"
