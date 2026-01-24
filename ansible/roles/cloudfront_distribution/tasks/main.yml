@@ -183,7 +183,6 @@
             state: absent
             caller_reference: "{{ cloudfront_caller_reference if (cloudfront_distribution_id | default('')) == '' else omit }}"
             distribution_id: "{{ cloudfront_distribution_id | default(omit) }}"
-            wait: true
-            wait_timeout: "{{ cloudfront_wait_timeout | default(1800) }}"
+            wait: false
           when:
             - not (keep_acm | default(true))
