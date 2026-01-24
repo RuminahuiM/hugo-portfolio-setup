@@ -225,6 +225,10 @@ Common settings (plain English):
 - `bucket_subdomain`: usually `www` so the bucket becomes `www.domain_name`.
 - `github_*`: settings for GitHub Actions OIDC (optional).
 
+## Hugo site source
+The Hugo site lives in `hugo-site/`. Edit content/config there, commit, and push.
+GitHub Actions workflows live in `.github/workflows/` and build the site from `hugo-site/`.
+
 Keep flags (used by `destroy.yml` and `redeploy.yml`):
 - These flags control what gets deleted during destroy/redeploy.
 - `true` means keep the existing resource.
@@ -263,6 +267,7 @@ Set GitHub repository variables:
 1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
 2) Add the variables printed by the playbook:
    - `AWS_REGION`
+   - `DEPLOY_BRANCH`
    - `AWS_ROLE_ARN`
    - `BUCKET_NAME`
    - `CF_DISTRIBUTION_ID`
@@ -317,6 +322,8 @@ This is only needed if you want GitHub Actions to deploy to S3.
 The role grants:
 - S3 sync permissions to `github_deployer_s3_bucket_name`.
 - CloudFront invalidation for `github_deployer_cloudfront_distribution_id` (if set).
+
+Make sure `github_repo_branch` matches `DEPLOY_BRANCH`, otherwise OIDC assumes a different branch than the workflow uses.
 
 ## Notes
 - If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
