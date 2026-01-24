@@ -212,8 +212,6 @@ Validate credentials (run this once; it should print your AWS account ID):
 aws sts get-caller-identity
 ```
 
-ACM certificates for CloudFront must be created in `us-east-1`, so keep `acm_region: "us-east-1"` in `ansible/inventory/group_vars/all/all.yml`.
-
 ## Configure user inputs
 Defaults live in `ansible/inventory/group_vars/all/all.yml`.
 Your overrides live in `ansible/inventory/group_vars/all/user.yml`.
