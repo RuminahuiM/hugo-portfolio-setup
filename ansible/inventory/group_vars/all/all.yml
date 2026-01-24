@@ -5,7 +5,7 @@ domain_name: "example.com"
 aws_region: "eu-north-1"
 acm_region: "us-east-1"
 common_tags:
-  Project: "HugoPortfolioHosting"
+  Project: "{{ project_name }}"
   ManagedBy: "ansible"
 
 keep_acm: true
@@ -37,15 +37,15 @@ route53_vpc_id: ""
 route53_vpc_region: "us-east-1"
 
 cloudfront_enabled: true
-cloudfront_caller_reference: "hugo-portfolio-cf"
-cloudfront_comment: "Hugo portfolio distribution"
+cloudfront_caller_reference: "{{ project_name }}-cf"
+cloudfront_comment: "{{ project_name }} distribution"
 cloudfront_default_root_object: "index.html"
 cloudfront_price_class: "PriceClass_100"
 cloudfront_aliases:
   - "{{ domain_name }}"
   - "{{ s3_bucket_name }}"
 cloudfront_hosted_zone_id: "Z2FDTNDATAQYW2"
-cloudfront_origin_id: "hugo-portfolio-origin"
+cloudfront_origin_id: "{{ project_name }}-origin"
 cloudfront_origin_domain_name: "{{ s3_bucket_name }}.s3.{{ aws_region }}.amazonaws.com"
 cloudfront_certificate_arn: ""
 
@@ -71,8 +71,8 @@ cloudfront_viewer_certificate:
   minimum_protocol_version: "TLSv1.2_2021"
 
 github_deployer_enabled: false
-github_account_name: "CHANGE_ME"
-github_repo_name: "CHANGE_ME"
+github_account_name: ""
+github_repo_name: ""
 github_repo_branch: "main"
 github_repo_subject: "repo:{{ github_account_name }}/{{ github_repo_name }}:ref:refs/heads/{{ github_repo_branch }}"
 github_repo_subjects: []
@@ -87,7 +87,7 @@ github_deployer_s3_bucket_name: "{{ s3_bucket_name }}"
 github_deployer_cloudfront_distribution_id: "{{ cloudfront_distribution_id | default('') }}"
 
 iam_enabled: false
-iam_role_name: "CHANGE_ME"
+iam_role_name: "{{ project_name }}-role"
 iam_role_description: "Role managed by Ansible"
 iam_role_assume_policy: |
   {

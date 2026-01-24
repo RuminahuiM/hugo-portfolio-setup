@@ -1,25 +1,23 @@
 ---
-title: Projekt Template
-description: This is a Sample Projekt based on X
+title: Project Template
+description: Sample project template based on X
 date: "2025-12-24"
 image: cover.jpg
 categories:
     - Example Category
-    - AWS
     - BSP
 tags:
     - Example Tag
-    - AWS
 weight: 2       # You can add weight to some posts to override the default sorting (date descending)
 ---
 
 # Projektdefinition 
 
-> **Titel des Projekts:**
-> **Name des Studierenden:** Dodoe Ruminahui Mannale
-> **Klasse / Studiengang:** ITCNE25 - Cloud Native HF
-> **Semester:** 0X Semester
-> **Betreuende Lehrperson:** 
+> **Project title:**
+> **Student name:** Your Name
+> **Program:** Your Program
+> **Semester:** X
+> **Supervisor:**
 
 ## Problemstellung
 

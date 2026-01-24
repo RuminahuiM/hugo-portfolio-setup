@@ -267,6 +267,7 @@ Set GitHub repository variables:
 1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
 2) Add the variables printed by the playbook:
    - `AWS_REGION`
+   - `HUGO_VERSION` (for example `0.123.8`)
    - `DEPLOY_BRANCH`
    - `AWS_ROLE_ARN`
    - `BUCKET_NAME`
@@ -328,4 +329,3 @@ Make sure `github_repo_branch` matches `DEPLOY_BRANCH`, otherwise OIDC assumes a
 ## Notes
 - If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
 - If S3 deletion fails with `AccessDenied`, ensure `s3:ListBucketVersions` and `s3:DeleteObjectVersion` are included in the IAM policy.
-

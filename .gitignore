@@ -5,3 +5,7 @@ __pycache__/
 .ansible/
 ansible/collections/
 ansible/inventory/group_vars/all/user.yml
+hugo-site/public/
+hugo-site/resources/
+hugo-site/.hugo_build.lock
+*:Zone.Identifier
