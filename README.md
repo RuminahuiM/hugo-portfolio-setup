@@ -1,4 +1,4 @@
-# hugo-portfolio-setup
+# hugo-portfolio-setup - Getting started
 This project provides a full, reproducible workflow for hosting a Hugo portfolio on AWS (S3 + CloudFront + Route 53 + ACM) and deploying updates via GitHub Actions.
 
 ## What this provisions
