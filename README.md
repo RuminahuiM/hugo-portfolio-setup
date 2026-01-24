@@ -231,7 +231,7 @@ Common settings (plain English):
 
 ## Branch workflow - Recomendation
 Keep `main` as the default template branch. Create a separate branch (for example `public`) where you edit your content and configuration.
-Set `DEPLOY_BRANCH` to that branch, and push updates there to trigger deployment.
+Later for Github Actions set `DEPLOY_BRANCH` to that branch, and push updates there to trigger deployment.
 
 ## Hugo site source
 The Hugo site lives in `hugo-site/`. Edit content/config there, commit, and push.
