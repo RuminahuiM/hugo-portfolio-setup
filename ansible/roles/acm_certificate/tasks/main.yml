@@ -178,7 +178,31 @@
               - "{{ acm_region }}"
               - --certificate-arn
               - "{{ item }}"
+          register: acm_delete_result
+          changed_when: acm_delete_result.rc == 0
+          failed_when: >-
+            acm_delete_result.rc != 0 and
+            'ResourceInUseException' not in (acm_delete_result.stderr | default(''))
           loop: "{{ acm_delete_list.stdout.split() }}"
           when:
             - acm_delete_list.stdout is defined
             - acm_delete_list.stdout | length > 0
+
+        - name: Warn when ACM certificate is still in use
+          ansible.builtin.debug:
+            msg:
+              - "ACM certificate is still in use (likely by CloudFront)."
+              - "CloudFront was switched to the default certificate without waiting."
+              - "Re-run destroy in a few minutes to remove the ACM certificate."
+          vars:
+            acm_delete_in_use: >-
+              {{
+                (acm_delete_result.results | default([]))
+                | selectattr('rc', 'defined')
+                | selectattr('rc', 'ne', 0)
+                | selectattr('stderr', 'search', 'ResourceInUseException')
+                | list
+                | length > 0
+              }}
+          when:
+            - acm_delete_in_use

@@ -161,18 +161,79 @@
             - cloudfront_id_lookup.stdout is defined
             - cloudfront_id_lookup.stdout != "None"
 
-        - name: Disable CloudFront distribution
-          community.aws.cloudfront_distribution:
-            state: present
-            distribution_id: "{{ cloudfront_distribution_id }}"
-            enabled: false
-            comment: "{{ cloudfront_comment }}"
-            default_root_object: "{{ cloudfront_default_root_object }}"
-            price_class: "{{ cloudfront_price_class }}"
-            aliases: []
-            origins: "{{ cloudfront_origins }}"
-            default_cache_behavior: "{{ cloudfront_default_cache_behavior }}"
-            wait: false
+        - name: Fetch CloudFront distribution config for disable
+          ansible.builtin.command:
+            argv:
+              - aws
+              - cloudfront
+              - get-distribution-config
+              - --id
+              - "{{ cloudfront_distribution_id }}"
+              - --output
+              - json
+          register: cloudfront_disable_config_raw
+          changed_when: false
           when:
             - cloudfront_distribution_id is defined
             - cloudfront_distribution_id | length > 0
+
+        - name: Build CloudFront disable config
+          ansible.builtin.set_fact:
+            cloudfront_disable_etag: "{{ (cloudfront_disable_config_raw.stdout | from_json).ETag }}"
+            cloudfront_disable_config: >-
+              {{
+                (cloudfront_disable_config_raw.stdout | from_json).DistributionConfig
+                | combine(
+                  {
+                    'Enabled': false,
+                    'Aliases': {'Quantity': 0},
+                    'ViewerCertificate': {
+                      'CloudFrontDefaultCertificate': true,
+                      'MinimumProtocolVersion': cloudfront_disable_minimum_protocol
+                    }
+                  },
+                  recursive=false
+                )
+              }}
+          vars:
+            cloudfront_disable_minimum_protocol: >-
+              {{
+                (cloudfront_viewer_certificate.minimum_protocol_version
+                if (cloudfront_viewer_certificate | default({})).minimum_protocol_version is defined
+                else 'TLSv1.2_2021')
+              }}
+          when:
+            - cloudfront_disable_config_raw.stdout is defined
+            - cloudfront_disable_config_raw.stdout | length > 0
+
+        - name: Create temp file for CloudFront disable config
+          ansible.builtin.tempfile:
+            state: file
+            suffix: cloudfront-disable.json
+          register: cloudfront_disable_tmp
+          when:
+            - cloudfront_disable_config is defined
+
+        - name: Write CloudFront disable config
+          ansible.builtin.copy:
+            dest: "{{ cloudfront_disable_tmp.path }}"
+            content: "{{ cloudfront_disable_config | to_json }}"
+          when:
+            - cloudfront_disable_tmp.path is defined
+
+        - name: Disable CloudFront distribution (no wait)
+          ansible.builtin.command:
+            argv:
+              - aws
+              - cloudfront
+              - update-distribution
+              - --id
+              - "{{ cloudfront_distribution_id }}"
+              - --if-match
+              - "{{ cloudfront_disable_etag }}"
+              - --distribution-config
+              - "file://{{ cloudfront_disable_tmp.path }}"
+          changed_when: true
+          when:
+            - cloudfront_disable_etag is defined
+            - cloudfront_disable_tmp.path is defined
