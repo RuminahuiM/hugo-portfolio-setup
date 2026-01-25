@@ -1,5 +1,5 @@
 # Change baseurl before deploy
-baseurl = "https://www.example.com"
+baseurl = "https://www.ruminahui.ch"
 languageCode = "en-us"
 title = "Hugo Portfolio"
 
