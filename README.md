@@ -275,7 +275,6 @@ Set GitHub repository variables:
 1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
 2) Add the variables printed by the playbook (all are required for deployments):
    - `AWS_REGION`
-   - `HUGO_VERSION` (for example `0.123.8`)
    - `DEPLOY_BRANCH`
    - `AWS_ROLE_ARN`
    - `BUCKET_NAME`
