@@ -10,13 +10,6 @@
         tags: "{{ (s3_apply_tags | default(true)) | ternary(common_tags, omit) }}"
       when: (s3_state | default('present')) == 'present'
 
-    - name: Placeholder for bucket policy and access configuration
-      ansible.builtin.debug:
-        msg:
-          - "TODO: attach bucket policy or CloudFront OAC permissions"
-          - "TODO: decide public access block settings"
-      when: (s3_state | default('present')) == 'present'
-
     - name: Remove S3 bucket contents
       ansible.builtin.command:
         argv:

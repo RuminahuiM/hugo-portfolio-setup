@@ -66,7 +66,7 @@ Permissions policy for the user (click to expand):
 <details>
 <summary>IAM policy JSON</summary>
 
-```
+```json
 {
 "Version": "2012-10-17",
 "Statement": [
@@ -275,7 +275,6 @@ Set GitHub repository variables:
 1) GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables.
 2) Add the variables printed by the playbook (all are required for deployments):
    - `AWS_REGION`
-   - `HUGO_VERSION` (for example `0.123.8`)
    - `DEPLOY_BRANCH`
    - `AWS_ROLE_ARN`
    - `BUCKET_NAME`
@@ -351,3 +350,4 @@ ansible-playbook playbooks/redeploy.yml -e '{"keep_s3": true, "keep_cloudfront":
 - Artifact upload fails with `Zone.Identifier`: remove the file and ensure `*:Zone.Identifier` is in `.gitignore`.
 - CloudFront delete takes a long time: AWS can take several minutes to disable and remove a distribution.
 - Certificate not attached: wait for ACM status `ISSUED`, then run `playbooks/post_validation.yml`.
+
