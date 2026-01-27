@@ -66,7 +66,7 @@ Permissions policy for the user (click to expand):
 <details>
 <summary>IAM policy JSON</summary>
 
-```
+```json
 {
 "Version": "2012-10-17",
 "Statement": [
