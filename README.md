@@ -353,9 +353,10 @@ ansible-playbook playbooks/redeploy.yml -e '{"keep_s3": true, "keep_cloudfront":
 ## Operational notes
 - If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
 - If S3 deletion fails with `AccessDenied`, ensure `s3:ListBucketVersions` and `s3:DeleteObjectVersion` are included in the IAM policy.
-
+[text](.github)
 ## Troubleshooting
 - OIDC assume role fails: verify `github_account_name`, `github_repo_name`, and `github_repo_branch` in `user.yml` match the GitHub repo and branch exactly (case sensitive). Then redeploy the GitHub role.
 - Artifact upload fails with `Zone.Identifier`: remove the file and ensure `*:Zone.Identifier` is in `.gitignore`.
 - CloudFront delete takes a long time: AWS can take several minutes to disable and remove a distribution.
 - Certificate not attached: wait for ACM status `ISSUED`, then run `playbooks/post_validation.yml`.
+ 
