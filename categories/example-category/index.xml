@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Example Category on MY Hugo Portfolio</title><link>https://www.ruminahui.ch/categories/example-category.html</link><description>Recent content in Example Category on MY Hugo Portfolio</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 24 Dec 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://www.ruminahui.ch/categories/example-category/index.xml" rel="self" type="application/rss+xml"/><item><title>Project Template</title><link>https://www.ruminahui.ch/p/project-template.html</link><pubDate>Wed, 24 Dec 2025 00:00:00 +0000</pubDate><guid>https://www.ruminahui.ch/p/project-template.html</guid><description>&lt;img src="https://www.ruminahui.ch/p/project-template/cover.jpg" alt="Featured image of post Project Template" /&gt;&lt;h1 id="projektdefinition"&gt;Projektdefinition
+&lt;/h1&gt;&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Project title:&lt;/strong&gt;
+&lt;strong&gt;Student name:&lt;/strong&gt; Your Name
+&lt;strong&gt;Program:&lt;/strong&gt; Your Program
+&lt;strong&gt;Semester:&lt;/strong&gt; X
+&lt;strong&gt;Supervisor:&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id="problemstellung"&gt;Problemstellung
+&lt;/h2&gt;&lt;h2 id="ziele"&gt;Ziele
+&lt;/h2&gt;&lt;h2 id="sachmittel"&gt;Sachmittel
+&lt;/h2&gt;&lt;h2 id="vorgaben-methoden-und-werkzeuge"&gt;Vorgaben, Methoden und Werkzeuge
+&lt;/h2&gt;&lt;h2 id="risiken"&gt;Risiken
+&lt;/h2&gt;&lt;hr&gt;
+&lt;h1 id="projektmanagement-dokumentation"&gt;Projektmanagement Dokumentation
+&lt;/h1&gt;&lt;h2 id="einführung"&gt;Einführung
+&lt;/h2&gt;&lt;h3 id="ziele-smart"&gt;Ziele (SMART)
+&lt;/h3&gt;&lt;h3 id="architektur"&gt;Architektur
+&lt;/h3&gt;&lt;h4 id="entscheidungen-begründung"&gt;Entscheidungen (Begründung)
+&lt;/h4&gt;&lt;h3 id="swot-analyse"&gt;SWOT Analyse
+&lt;/h3&gt;&lt;h4 id="stärken-strengths"&gt;Stärken (Strengths)
+&lt;/h4&gt;&lt;h4 id="schwächen-weaknesses"&gt;Schwächen (Weaknesses)
+&lt;/h4&gt;&lt;h4 id="chancen-opportunities"&gt;Chancen (Opportunities)
+&lt;/h4&gt;&lt;h4 id="risikenbedrohungen-threats"&gt;Risiken/Bedrohungen (Threats)
+&lt;/h4&gt;&lt;h4 id="wichtige-massnahmen"&gt;Wichtige Massnahmen
+&lt;/h4&gt;&lt;h3 id="übersicht-projektvorgehen"&gt;Übersicht Projektvorgehen
+&lt;/h3&gt;&lt;hr&gt;
+&lt;h2 id="projekmanagement-methodik"&gt;Projekmanagement Methodik
+&lt;/h2&gt;&lt;h3 id="scrum-definitions"&gt;Scrum Definitions
+&lt;/h3&gt;&lt;h3 id="tools"&gt;Tools
+&lt;/h3&gt;&lt;h3 id="zeitplan"&gt;Zeitplan
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;Sprint 0 - Sprint Title&lt;/strong&gt; &lt;br&gt;
+&lt;strong&gt;Datum:&lt;/strong&gt; 17. Nov - 30. Nov&lt;/p&gt;
+&lt;h3 id="zwischengespräche-ergebnisse"&gt;Zwischengespräche Ergebnisse
+&lt;/h3&gt;&lt;h4 id="zwischengespräch-01"&gt;Zwischengespräch 01
+&lt;/h4&gt;&lt;h4 id="zwischengespräch-02"&gt;Zwischengespräch 02
+&lt;/h4&gt;&lt;h4 id="zwischengespräch-03"&gt;Zwischengespräch 03
+&lt;/h4&gt;&lt;hr&gt;
+&lt;h2 id="scrum-sprints"&gt;Scrum Sprints
+&lt;/h2&gt;&lt;h3 id="sprint-0---sprint-title"&gt;Sprint 0 - Sprint Title
+&lt;/h3&gt;&lt;p&gt;kurze einführung&lt;/p&gt;
+&lt;h4 id="sprint-planing"&gt;Sprint Planing
+&lt;/h4&gt;&lt;p&gt;Folgende Backlog items habe ich für den Sprint 0 eingeplant:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;bsp item beschreibung &lt;a class="link" href="link" &gt;SHORT-01&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;bsp item beschreibung &lt;a class="link" href="link" &gt;SHORT-02&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;bsp item beschreibung &lt;a class="link" href="link" &gt;SHORT-03&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://www.ruminahui.ch/..%5c..%5cresources%5cimages%5cSprint_0_Plan.png"
+loading="lazy"
+alt="Planned Sprint 0"
+&gt;&lt;/p&gt;
+&lt;h4 id="sprint-review"&gt;Sprint Review
+&lt;/h4&gt;&lt;p&gt;Kurze einführung&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Eingeplante Backlog Items&lt;/th&gt;
+&lt;th&gt;Demo&lt;/th&gt;
+&lt;th&gt;Status&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-01&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-02&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-03&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h5 id="herausforderungen--lösungen"&gt;Herausforderungen &amp;amp; Lösungen
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;Bsp item&lt;/li&gt;
+&lt;li&gt;Bsp item&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="next-sprint"&gt;Next Sprint
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;Ziel:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Tasks die übernommen werden:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Neue Inputs:&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id="sprint-retrospective"&gt;Sprint Retrospective
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;Was war gut?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Was war nicht gut?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Welche Massnahmen können ergriffen werden?&lt;/strong&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id="sprint-1---sprint-title"&gt;Sprint 1 - Sprint Title
+&lt;/h3&gt;&lt;p&gt;kurze einführung&lt;/p&gt;
+&lt;h4 id="sprint-planing-1"&gt;Sprint Planing
+&lt;/h4&gt;&lt;p&gt;Folgende Backlog items habe ich für den Sprint 1 eingeplant:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;bsp item beschreibung &lt;a class="link" href="link" &gt;SHORT-04&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;bsp item beschreibung &lt;a class="link" href="link" &gt;SHORT-04&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://www.ruminahui.ch/..%5c..%5cresources%5cimages%5cSprint_1_Plan.png"
+loading="lazy"
+alt="Planned Sprint 1"
+&gt;&lt;/p&gt;
+&lt;h4 id="sprint-review-1"&gt;Sprint Review
+&lt;/h4&gt;&lt;p&gt;Kurze einführung&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Eingeplante Backlog Items&lt;/th&gt;
+&lt;th&gt;Demo&lt;/th&gt;
+&lt;th&gt;Status&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-01&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-02&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;a class="link" href="link" &gt;SHORT-03&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;NO DEMO&lt;/td&gt;
+&lt;td&gt;Status&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h5 id="herausforderungen--lösungen-1"&gt;Herausforderungen &amp;amp; Lösungen
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;Bsp item&lt;/li&gt;
+&lt;li&gt;Bsp item&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id="next-sprint-1"&gt;Next Sprint
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;Ziel:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Tasks die übernommen werden:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Neue Inputs:&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id="sprint-retrospective-1"&gt;Sprint Retrospective
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;Was war gut?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Was war nicht gut?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Welche Massnahmen können ergriffen werden?&lt;/strong&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h1 id="technische-umsetzung"&gt;Technische Umsetzung
+&lt;/h1&gt;&lt;h2 id="initial-setup--entwicklungsumgebung"&gt;Initial Setup / Entwicklungsumgebung
+&lt;/h2&gt;&lt;h2 id="design"&gt;Design
+&lt;/h2&gt;&lt;h3 id="architektur-skizze"&gt;Architektur Skizze
+&lt;/h3&gt;&lt;h3 id="use-cases"&gt;Use Cases
+&lt;/h3&gt;&lt;h2 id="herausforderungen"&gt;Herausforderungen
+&lt;/h2&gt;&lt;h2 id="testingprotocoll--results"&gt;Testingprotocoll &amp;amp; Results
+&lt;/h2&gt;</description></item></channel></rss>
