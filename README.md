@@ -52,7 +52,7 @@ import boto3, botocore
 print("boto3", boto3.__version__, "botocore", botocore.__version__)
 PY
 ansible-galaxy collection list | grep -E 'amazon.aws|community.aws'
-```
+``` 
 
 ## AWS credentials
 You need AWS credentials on the machine running Ansible. Use an IAM user with access keys.
