@@ -6,6 +6,18 @@ This is a quick start template for [Hugo theme Stack](https://github.com/CaiJimm
 
 It comes with a basic theme structure and configuration. GitHub action has been set up to deploy the theme to a public GitHub page automatically. Also, there's a cron job to update the theme automatically everyday.
 
+## Portfolio project documentation setup
+
+This repository now includes a dedicated `content/projects` section for multi-page project documentation:
+
+- Each project lives in its own folder (`content/projects/<project-slug>/`).
+- The project overview goes in `_index.md`.
+- Add additional pages (e.g. `01-planning.md`, `02-implementation.md`) for full documentation structure.
+- Every project page shows:
+  - in-project navigation (overview + all pages + previous/next links),
+  - a button to download a single merged Markdown file (`project-bundle.md`),
+  - a button to download a ZIP with `project.md` + local image assets (`project-assets.json` manifest + JS ZIP builder).
+
 ## Get started
 
 1. Click *Use this template*, and create your repository as `<username>.github.io` on GitHub.
