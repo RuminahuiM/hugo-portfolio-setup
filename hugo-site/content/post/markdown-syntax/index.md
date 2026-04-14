@@ -232,7 +232,9 @@ For more details, check out the [documentation](https://stack.jimmycai.com/writi
 
 ## Gist
 
-{{< gist CaiJimmy e2751a943de10b2a5b3a8a6c2120cb86 >}}
+```text
+Gist shortcode example removed for Hugo v0.156+ compatibility.
+```
 
 ## GitLab
 

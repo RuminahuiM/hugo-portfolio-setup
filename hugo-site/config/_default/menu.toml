@@ -26,4 +26,4 @@ name = "Projects"
 url = "/projects/"
 weight = 10
 [main.params]
-icon = "folders"
+icon = "categories"
