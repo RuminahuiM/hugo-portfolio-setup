@@ -1,0 +1,10 @@
+{{- $project := . -}}
+{{- $assets := slice -}}
+{{- range $project.RegularPages -}}
+  {{- range .Resources.Match "**" -}}
+    {{- if in (slice "image/jpeg" "image/png" "image/webp" "image/gif" "image/svg+xml") .MediaType.Type -}}
+      {{- $assets = $assets | append (dict "name" .Name "path" .RelPermalink) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{ jsonify (dict "project" $project.Title "markdown" (printf "%sproject-bundle.md" $project.RelPermalink) "assets" $assets) }}

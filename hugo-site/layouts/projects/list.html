@@ -1,0 +1,48 @@
+{{ define "body-class" }}
+article-page
+{{ end }}
+
+{{ define "main" }}
+{{- $isProjectsRoot := eq .Parent (.Site.Home) -}}
+
+{{ if $isProjectsRoot }}
+<header>
+  <h3 class="section-title">Portfolio</h3>
+  <div class="section-card">
+    <div class="section-details">
+      <h3 class="section-count">{{ len .Sections }} Projects</h3>
+      <h1 class="section-term">{{ .Title }}</h1>
+      {{ with .Params.description }}<h2 class="section-description">{{ . }}</h2>{{ end }}
+    </div>
+  </div>
+</header>
+
+<section class="article-list--compact">
+  {{ range .Sections.ByDate.Reverse }}
+  <article>
+    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+  </article>
+  {{ end }}
+</section>
+{{ else }}
+<article class="main-article">
+  <header class="article-header">
+    <h1 class="article-title">{{ .Title }}</h1>
+    {{ with .Params.description }}<h2 class="article-subtitle">{{ . }}</h2>{{ end }}
+  </header>
+
+  {{ partial "projects/navigation.html" . }}
+
+  <section class="article-content">
+    {{ .Content }}
+  </section>
+
+  {{ partial "projects/download-buttons.html" . }}
+</article>
+{{ end }}
+
+{{ partialCached "footer/footer" . }}
+{{ end }}
+
+{{ define "right-sidebar" }}{{ end }}

@@ -19,3 +19,18 @@ disqusShortname = "hugo-theme-stack"
 
 [pagination]
 pagerSize = 5
+
+[mediaTypes."text/markdown"]
+  suffixes = ["md"]
+
+[outputFormats.projectbundle]
+  mediaType = "text/markdown"
+  baseName = "project-bundle"
+  isPlainText = true
+  notAlternative = true
+
+[outputFormats.projectassets]
+  mediaType = "application/json"
+  baseName = "project-assets"
+  isPlainText = true
+  notAlternative = true

@@ -1,0 +1,9 @@
+{{- $project := .CurrentSection -}}
+{{- $bundleURL := printf "%sproject-bundle.md" $project.RelPermalink -}}
+{{- $manifestURL := printf "%sproject-assets.json" $project.RelPermalink -}}
+
+<div class="project-downloads" data-project-markdown="{{ $bundleURL }}" data-project-manifest="{{ $manifestURL }}">
+  <a class="project-downloads__btn" href="{{ $bundleURL }}" download>Download markdown (single file)</a>
+  <button class="project-downloads__btn" type="button" data-project-zip-btn>Download markdown + images (.zip)</button>
+</div>
+<script src="{{ "js/project-download.js" | relURL }}" defer></script>
