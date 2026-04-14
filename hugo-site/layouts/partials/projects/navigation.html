@@ -1,0 +1,33 @@
+{{- $project := .CurrentSection -}}
+{{- $docs := $project.RegularPages.ByWeight.ByDate -}}
+
+<nav class="project-doc-nav" aria-label="Project documentation navigation">
+  <a class="project-doc-nav__item {{ if eq .RelPermalink $project.RelPermalink }}is-active{{ end }}" href="{{ $project.RelPermalink }}">Overview</a>
+  {{ range $docs }}
+    <a class="project-doc-nav__item {{ if eq $.RelPermalink .RelPermalink }}is-active{{ end }}" href="{{ .RelPermalink }}">{{ .Title }}</a>
+  {{ end }}
+</nav>
+
+{{ if ne .RelPermalink $project.RelPermalink }}
+  {{- $pages := $docs -}}
+  {{- $idx := -1 -}}
+  {{- range $i, $p := $pages -}}
+    {{- if eq $p.RelPermalink $.RelPermalink -}}
+      {{- $idx = $i -}}
+    {{- end -}}
+  {{- end -}}
+
+  <div class="project-doc-pagination">
+    {{ if ge $idx 1 }}
+      <a href="{{ (index $pages (sub $idx 1)).RelPermalink }}">← {{ (index $pages (sub $idx 1)).Title }}</a>
+    {{ else }}
+      <span></span>
+    {{ end }}
+
+    {{ if ge (sub (len $pages) 1) (add $idx 1) }}
+      <a href="{{ (index $pages (add $idx 1)).RelPermalink }}">{{ (index $pages (add $idx 1)).Title }} →</a>
+    {{ else }}
+      <span></span>
+    {{ end }}
+  </div>
+{{ end }}

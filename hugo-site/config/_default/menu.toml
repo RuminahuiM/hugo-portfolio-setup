@@ -19,3 +19,11 @@ icon = "brand-github"
 identifier = "linkedin"
 name = "LinkedIn"
 url = "https://www.linkedin.com/in/your-handle"
+
+[[main]]
+identifier = "projects"
+name = "Projects"
+url = "/projects/"
+weight = 10
+[main.params]
+icon = "folders"

@@ -1,3 +1,45 @@
-/*
-    You can add your own custom styles here.
-*/
+.project-doc-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.project-doc-nav__item {
+  border: 1px solid var(--card-separator-color);
+  border-radius: var(--card-border-radius);
+  color: var(--card-text-color-main);
+  display: inline-block;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.project-doc-nav__item.is-active {
+  background: var(--accent-color-darker);
+  color: white;
+}
+
+.project-doc-pagination {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 1.5rem;
+}
+
+.project-downloads {
+  border-top: 1px solid var(--card-separator-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+.project-downloads__btn {
+  background: var(--accent-color);
+  border: 0;
+  border-radius: var(--tag-border-radius);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.9rem;
+}
