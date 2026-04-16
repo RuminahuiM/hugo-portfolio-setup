@@ -1,45 +1,181 @@
+.project-list article.project-list__item > a {
+  align-items: center;
+}
+
+.project-page .article-header {
+  margin-bottom: 0.75rem;
+}
+
 .project-doc-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
+  border-bottom: 1px solid var(--card-separator-color);
+  margin: 0 0 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
 
-.project-doc-nav__item {
-  border: 1px solid var(--card-separator-color);
-  border-radius: var(--card-border-radius);
-  color: var(--card-text-color-main);
-  display: inline-block;
-  font-size: 0.9rem;
-  padding: 0.4rem 0.8rem;
-}
+  &__list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+    list-style: none;
+    margin: 0;
+    min-width: max-content;
+    padding: 0;
+  }
 
-.project-doc-nav__item.is-active {
-  background: var(--accent-color-darker);
-  color: white;
+  &__item {
+    background: var(--card-background);
+    border: 1px solid var(--card-separator-color);
+    border-radius: var(--tag-border-radius);
+    color: var(--card-text-color-main);
+    display: inline-flex;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 0.5rem 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    &.is-active {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #fff;
+    }
+  }
 }
 
 .project-doc-pagination {
-  display: flex;
-  justify-content: space-between;
-  margin: 0 0 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1.5rem;
+
+  &__link {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.55rem;
+    justify-content: center;
+    min-width: 0;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }
 
 .project-downloads {
-  border-top: 1px solid var(--card-separator-color);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 2rem;
-  padding-top: 1rem;
+  background: var(--card-background);
+  border: 1px solid var(--card-separator-color);
+  border-radius: var(--card-border-radius);
+  margin-top: 2.25rem;
+  padding: 1.25rem;
+
+  &__content {
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    font-size: 1.8rem;
+    margin: 0;
+  }
+
+  &__description {
+    color: var(--card-text-color-secondary);
+    font-size: 1.4rem;
+    margin: 0.45rem 0 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__btn {
+    align-items: center;
+    border-radius: var(--tag-border-radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.4rem;
+    font-weight: 600;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.75;
+    }
+  }
+
+  &__btn--primary {
+    background: var(--accent-color);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: var(--accent-color-darker);
+    }
+  }
+
+  &__btn--secondary {
+    background: transparent;
+    border-color: var(--card-separator-color);
+    color: var(--card-text-color-main);
+
+    &:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+  }
+
+  &__status {
+    color: var(--card-text-color-secondary);
+    font-size: 1.3rem;
+    margin: 0.85rem 0 0;
+    min-height: 1.8rem;
+
+    &.is-loading {
+      color: var(--card-text-color-main);
+    }
+
+    &.is-success {
+      color: #2e7d32;
+    }
+
+    &.is-error {
+      color: #c62828;
+    }
+  }
 }
 
-.project-downloads__btn {
-  background: var(--accent-color);
-  border: 0;
-  border-radius: var(--tag-border-radius);
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0.55rem 0.9rem;
+@media (max-width: 767px) {
+  .project-doc-pagination {
+    grid-template-columns: 1fr;
+  }
+
+  .project-downloads {
+    padding: 1rem;
+
+    &__btn {
+      width: 100%;
+    }
+  }
 }
