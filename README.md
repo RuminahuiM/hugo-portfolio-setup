@@ -37,8 +37,17 @@ Required tools:
 
 Install (run in terminal):
 ```bash
+python3 -m venv ansible/.venv
+source ansible/.venv/bin/activate
+pip install --upgrade pip
 pip install ansible boto3 botocore awscli
 ansible-galaxy collection install -r ansible/requirements.yml
+```
+
+Activate the venv in each new terminal:
+```bash
+cd /path/to/hugo-portfolio-setup/ansible
+source .venv/bin/activate
 ```
 
 Verify installs (run in terminal):
@@ -52,7 +61,7 @@ import boto3, botocore
 print("boto3", boto3.__version__, "botocore", botocore.__version__)
 PY
 ansible-galaxy collection list | grep -E 'amazon.aws|community.aws'
-```
+``` 
 
 ## AWS credentials
 You need AWS credentials on the machine running Ansible. Use an IAM user with access keys.
@@ -344,10 +353,10 @@ ansible-playbook playbooks/redeploy.yml -e '{"keep_s3": true, "keep_cloudfront":
 ## Operational notes
 - If you destroy ACM (`keep_acm: false`), the CloudFront distribution is deleted first to free the certificate. This can take time.
 - If S3 deletion fails with `AccessDenied`, ensure `s3:ListBucketVersions` and `s3:DeleteObjectVersion` are included in the IAM policy.
-
+[text](.github)
 ## Troubleshooting
 - OIDC assume role fails: verify `github_account_name`, `github_repo_name`, and `github_repo_branch` in `user.yml` match the GitHub repo and branch exactly (case sensitive). Then redeploy the GitHub role.
 - Artifact upload fails with `Zone.Identifier`: remove the file and ensure `*:Zone.Identifier` is in `.gitignore`.
 - CloudFront delete takes a long time: AWS can take several minutes to disable and remove a distribution.
 - Certificate not attached: wait for ACM status `ISSUED`, then run `playbooks/post_validation.yml`.
-
+ 

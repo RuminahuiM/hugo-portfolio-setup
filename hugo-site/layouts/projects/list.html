@@ -10,31 +10,77 @@ article-page
   <h3 class="section-title">Portfolio</h3>
   <div class="section-card">
     <div class="section-details">
-      <h3 class="section-count">{{ len .Sections }} Projects</h3>
+      <h3 class="section-count">{{ T "list.page" (len .Sections) }}</h3>
       <h1 class="section-term">{{ .Title }}</h1>
       {{ with .Params.description }}<h2 class="section-description">{{ . }}</h2>{{ end }}
     </div>
+
+    {{- $image := partialCached "helper/image" (dict "Context" . "Type" "section") .RelPermalink "section" -}}
+    {{ if $image.exists }}
+      <div class="section-image">
+        {{ if $image.resource }}
+          {{- $thumbnail := $image.resource.Fill "120x120" -}}
+          <img src="{{ $thumbnail.RelPermalink }}" width="{{ $thumbnail.Width }}" height="{{ $thumbnail.Height }}" loading="lazy" alt="{{ .Title }}" />
+        {{ else }}
+          <img src="{{ $image.permalink }}" loading="lazy" alt="{{ .Title }}" />
+        {{ end }}
+      </div>
+    {{ end }}
   </div>
 </header>
 
-<section class="article-list--compact">
+<section class="article-list--compact project-list" aria-label="Project list">
   {{ range .Sections.ByDate.Reverse }}
-  <article>
-    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-    {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
-  </article>
+    <article class="project-list__item">
+      <a href="{{ .RelPermalink }}" aria-label="Open project {{ .Title }}">
+        <div class="article-details">
+          <h2 class="article-title">{{ .Title }}</h2>
+          {{ with .Params.description }}
+            <p class="article-subtitle">{{ . }}</p>
+          {{ end }}
+          <footer class="article-time">
+            <div>
+              {{ partial "helper/icon" "archives" }}
+              <span>{{ T "list.page" (len .RegularPages) }}</span>
+            </div>
+            {{ if not .Lastmod.IsZero }}
+              <div>
+                {{ partial "helper/icon" "clock" }}
+                <time datetime='{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}'>{{ .Lastmod | time.Format (or .Site.Params.dateFormat.published "Jan 02, 2006") }}</time>
+              </div>
+            {{ end }}
+          </footer>
+        </div>
+
+        {{- $projectImage := partialCached "helper/image" (dict "Context" . "Type" "articleList") .RelPermalink "articleList" -}}
+        {{ if $projectImage.exists }}
+          <div class="article-image">
+            {{ if $projectImage.resource }}
+              {{- $thumb := $projectImage.resource.Fill "120x120" -}}
+              <img src="{{ $thumb.RelPermalink }}" width="{{ $thumb.Width }}" height="{{ $thumb.Height }}" loading="lazy" alt="Cover image for {{ .Title }}" />
+            {{ else }}
+              <img src="{{ $projectImage.permalink }}" loading="lazy" alt="Cover image for {{ .Title }}" />
+            {{ end }}
+          </div>
+        {{ end }}
+      </a>
+    </article>
   {{ end }}
 </section>
 {{ else }}
-<article class="main-article">
+<article class="main-article project-page">
   <header class="article-header">
-    <h1 class="article-title">{{ .Title }}</h1>
-    {{ with .Params.description }}<h2 class="article-subtitle">{{ . }}</h2>{{ end }}
+    <div class="article-details">
+      <div class="article-title-wrapper">
+        <h1 class="article-title">{{ .Title }}</h1>
+        {{ with .Params.description }}<h2 class="article-subtitle">{{ . }}</h2>{{ end }}
+      </div>
+    </div>
   </header>
 
   {{ partial "projects/navigation.html" . }}
 
-  <section class="article-content">
+  <section class="article-content" aria-label="Project overview">
     {{ .Content }}
   </section>
 

@@ -1,33 +1,47 @@
 {{- $project := .CurrentSection -}}
 {{- $docs := $project.RegularPages.ByWeight.ByDate -}}
+{{- $isOverview := eq .RelPermalink $project.RelPermalink -}}
 
 <nav class="project-doc-nav" aria-label="Project documentation navigation">
-  <a class="project-doc-nav__item {{ if eq .RelPermalink $project.RelPermalink }}is-active{{ end }}" href="{{ $project.RelPermalink }}">Overview</a>
-  {{ range $docs }}
-    <a class="project-doc-nav__item {{ if eq $.RelPermalink .RelPermalink }}is-active{{ end }}" href="{{ .RelPermalink }}">{{ .Title }}</a>
-  {{ end }}
+  <ul class="project-doc-nav__list" role="list">
+    <li>
+      <a class="project-doc-nav__item {{ if $isOverview }}is-active{{ end }}" href="{{ $project.RelPermalink }}" {{ if $isOverview }}aria-current="page"{{ end }}>Overview</a>
+    </li>
+    {{ range $docs }}
+      {{- $isCurrent := eq $.RelPermalink .RelPermalink -}}
+      <li>
+        <a class="project-doc-nav__item {{ if $isCurrent }}is-active{{ end }}" href="{{ .RelPermalink }}" {{ if $isCurrent }}aria-current="page"{{ end }}>{{ .Title }}</a>
+      </li>
+    {{ end }}
+  </ul>
 </nav>
 
-{{ if ne .RelPermalink $project.RelPermalink }}
-  {{- $pages := $docs -}}
+{{ if not $isOverview }}
   {{- $idx := -1 -}}
-  {{- range $i, $p := $pages -}}
+  {{- range $i, $p := $docs -}}
     {{- if eq $p.RelPermalink $.RelPermalink -}}
       {{- $idx = $i -}}
     {{- end -}}
   {{- end -}}
 
-  <div class="project-doc-pagination">
-    {{ if ge $idx 1 }}
-      <a href="{{ (index $pages (sub $idx 1)).RelPermalink }}">← {{ (index $pages (sub $idx 1)).Title }}</a>
-    {{ else }}
-      <span></span>
-    {{ end }}
+  <nav class="project-doc-pagination pagination" role="navigation" aria-label="Project page navigation">
+    {{- $hasPrev := ge $idx 1 -}}
+    {{- $hasNext := ge (sub (len $docs) 1) (add $idx 1) -}}
 
-    {{ if ge (sub (len $pages) 1) (add $idx 1) }}
-      <a href="{{ (index $pages (add $idx 1)).RelPermalink }}">{{ (index $pages (add $idx 1)).Title }} →</a>
-    {{ else }}
-      <span></span>
-    {{ end }}
-  </div>
+    <a class="page-link project-doc-pagination__link {{ if not $hasPrev }}disabled{{ end }}"
+      {{ if $hasPrev }}href="{{ (index $docs (sub $idx 1)).RelPermalink }}"{{ end }}
+      aria-label="Previous document"
+      {{ if not $hasPrev }}aria-disabled="true"{{ end }}>
+      {{ partial "helper/icon" "chevron-left" }}
+      <span>{{ if $hasPrev }}{{ (index $docs (sub $idx 1)).Title }}{{ else }}Previous{{ end }}</span>
+    </a>
+
+    <a class="page-link project-doc-pagination__link {{ if not $hasNext }}disabled{{ end }}"
+      {{ if $hasNext }}href="{{ (index $docs (add $idx 1)).RelPermalink }}"{{ end }}
+      aria-label="Next document"
+      {{ if not $hasNext }}aria-disabled="true"{{ end }}>
+      <span>{{ if $hasNext }}{{ (index $docs (add $idx 1)).Title }}{{ else }}Next{{ end }}</span>
+      {{ partial "helper/icon" "chevron-right" }}
+    </a>
+  </nav>
 {{ end }}

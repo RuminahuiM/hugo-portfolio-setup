@@ -50,30 +50,50 @@ async function downloadProjectZip(container) {
   URL.revokeObjectURL(downloadLink.href);
 }
 
+function setStatus(statusNode, type, message) {
+  if (!statusNode) return;
+
+  statusNode.classList.remove('is-success', 'is-error', 'is-loading');
+  if (type) {
+    statusNode.classList.add(`is-${type}`);
+  }
+  statusNode.textContent = message;
+}
+
 function wireProjectDownloads() {
   const blocks = document.querySelectorAll('.project-downloads');
 
   blocks.forEach((block) => {
     const zipBtn = block.querySelector('[data-project-zip-btn]');
+    const label = block.querySelector('[data-project-zip-label]');
+    const status = block.querySelector('[data-project-download-status]');
     if (!zipBtn || zipBtn.dataset.wired) return;
 
     zipBtn.dataset.wired = 'true';
+    const defaultLabel = label ? label.textContent : zipBtn.textContent;
+
     zipBtn.addEventListener('click', async () => {
-      const defaultLabel = zipBtn.textContent;
       zipBtn.disabled = true;
-      zipBtn.textContent = 'Preparing ZIP…';
+      zipBtn.setAttribute('aria-busy', 'true');
+
+      if (label) label.textContent = 'Preparing ZIP…';
+      setStatus(status, 'loading', 'Preparing your ZIP bundle…');
 
       try {
         await downloadProjectZip(block);
-        zipBtn.textContent = 'ZIP downloaded';
+        if (label) label.textContent = 'ZIP downloaded';
+        setStatus(status, 'success', 'ZIP downloaded successfully.');
       } catch (err) {
         console.error(err);
-        zipBtn.textContent = 'Download failed. Retry';
+        if (label) label.textContent = 'Download failed. Retry';
+        setStatus(status, 'error', 'Unable to generate ZIP right now. Please retry.');
       } finally {
         setTimeout(() => {
           zipBtn.disabled = false;
-          zipBtn.textContent = defaultLabel;
-        }, 1600);
+          zipBtn.removeAttribute('aria-busy');
+          if (label) label.textContent = defaultLabel;
+          setStatus(status, null, '');
+        }, 1800);
       }
     });
   });
